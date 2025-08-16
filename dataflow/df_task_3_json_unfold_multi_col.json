@@ -1,0 +1,108 @@
+{
+	"name": "df_task_3_json_unfold_multi_col",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AggregateTable"
+				},
+				{
+					"name": "AggregateSchema"
+				},
+				{
+					"name": "DerivedColumn"
+				},
+				{
+					"name": "Flatten"
+				},
+				{
+					"name": "AggregateColumns"
+				},
+				{
+					"name": "DerivedColumnHandleSingle"
+				},
+				{
+					"name": "AggregateMainColumn"
+				},
+				{
+					"name": "Sort"
+				},
+				{
+					"name": "DerivedColumnValidate"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          intern_id as integer,",
+				"          intern_name as string,",
+				"          email as string,",
+				"          department_id as integer,",
+				"          stipend as decimal(10,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Source",
+				"Sort aggregate(ip_intern_tb = collect(@(intern_id=intern_id, intern_name=intern_name, email=email, department_id=department_id, stipend=stipend))) ~> AggregateTable",
+				"AggregateTable aggregate(sourav_db = collect(@(ip_intern_tb=ip_intern_tb))) ~> AggregateSchema",
+				"Source derive(intern_name = split(intern_name, '^'),",
+				"          email = split(email, '^')) ~> DerivedColumn",
+				"DerivedColumn foldDown(unrollMultiple(intern_name,email),",
+				"     mapColumn(",
+				"          intern_id,",
+				"          intern_name,",
+				"          email,",
+				"          department_id,",
+				"          stipend",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> Flatten",
+				"Flatten aggregate(groupBy(intern_id,",
+				"          department_id,",
+				"          stipend),",
+				"     intern_name = distinct(collect(@(intern_name = intern_name))),",
+				"          email = distinct(collect(@(email = email)))) ~> AggregateColumns",
+				"AggregateColumns derive(intern_name = /* toString(iif(isNull(intern_name[2]), intern_name[1].intern_name, toString(intern_name))) */\r",
+				"toString(iif(\r",
+				"    isNull(intern_name[2]),\r",
+				"    replace(replace(split(toString(intern_name[1]), ':')[2], '}', ''), '\"', ''),\r",
+				"    toString(intern_name))\r",
+				"),",
+				"          email = /* toString(iif(isNull(email[2]), email[1].email, toString(email))) */\r",
+				"toString(iif(\r",
+				"    isNull(email[2]),\r",
+				"    replace(replace(split(toString(email[1]), ':')[2], '}', ''), '\"', ''),\r",
+				"    toString(email))\r",
+				")) ~> DerivedColumnHandleSingle",
+				"AggregateSchema aggregate(mysql_column = toString(collect(@(sourav_db=sourav_db)))) ~> AggregateMainColumn",
+				"DerivedColumnHandleSingle sort(asc(intern_id, true)) ~> Sort",
+				"AggregateMainColumn derive(mysql_column = replace(replace(replace(mysql_column, '\\\\', ''), '\"[', '['), ']\"', ']')) ~> DerivedColumnValidate",
+				"DerivedColumnValidate sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['uncapped_extended.json'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> Sink"
+			]
+		}
+	}
+}

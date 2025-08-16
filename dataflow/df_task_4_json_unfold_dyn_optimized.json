@@ -1,0 +1,127 @@
+{
+	"name": "df_task_4_json_unfold_dyn_optimized",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumn"
+				},
+				{
+					"name": "DerivedColumnHandleObject"
+				},
+				{
+					"name": "DerivedColumnHandleQuote"
+				},
+				{
+					"name": "AggregateCount"
+				},
+				{
+					"name": "SurrogateKeyID"
+				},
+				{
+					"name": "DerivedColumnHandleJSON"
+				},
+				{
+					"name": "JoinCountID"
+				},
+				{
+					"name": "Select"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          intern_id as integer,",
+				"          intern_name as string,",
+				"          email as string,",
+				"          department_id as integer,",
+				"          stipend as decimal(10,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Source",
+				"Source derive(each(match(type=='string'), $$ = replace(\r",
+				"    replace(\r",
+				"        replace(\r",
+				"            iif(\r",
+				"                instr($$, '^') != 0,\r",
+				"                toString(split($$, '^')),\r",
+				"                $$\r",
+				"            ), '[\"', concat('[{\"', $0, '\":\"')\r",
+				"        ), '\",\"', concat('\"},{\"', $0, '\":\"')\r",
+				"    ), '\"]', '\"}]'\r",
+				"))) ~> DerivedColumn",
+				"DerivedColumn derive(each(match(true()), $$ = iif(\r",
+				"     $# == 1,\r",
+				"     concat('{\"', toString($0), '\":\"', toString($$), '\"'),\r",
+				"     iif(\r",
+				"          $# == size(columnNames()),\r",
+				"          concat('\"', toString($0), '\":\"', toString($$), '\"}'),\r",
+				"          concat('\"', toString($0), '\":\"', toString($$), '\"')\r",
+				"     )\r",
+				"))) ~> DerivedColumnHandleObject",
+				"DerivedColumnHandleObject derive(each(match(type=='string'), $$ = replace(replace($$, '\"[', '['), ']\"', ']'))) ~> DerivedColumnHandleQuote",
+				"SurrogateKeyID aggregate(cnt = count(id)) ~> AggregateCount",
+				"DerivedColumnHandleQuote keyGenerate(output(id as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> SurrogateKeyID",
+				"JoinCountID derive(each(match(true()), $$ = iif(\r",
+				"     instr(toString($$), '{') == 1,\r",
+				"     iif(\r",
+				"          id == 1,\r",
+				"          replace(toString($$), concat('{\"', toString($0)), concat('[{\"', toString($0))),\r",
+				"          concat(', ', toString($$))\r",
+				"     ),\r",
+				"     iif(\r",
+				"          instr(toString($$), '}') == length(toString($$)),\r",
+				"          iif(\r",
+				"               id == cnt,\r",
+				"               replace(toString($$), toString($$), concat(toString($$), ']')),\r",
+				"               toString($$)\r",
+				"          ),\r",
+				"          toString($$)\r",
+				"     )\r",
+				"))) ~> DerivedColumnHandleJSON",
+				"AggregateCount, SurrogateKeyID join(true(),",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinCountID",
+				"DerivedColumnHandleJSON select(mapColumn(",
+				"          intern_id,",
+				"          intern_name,",
+				"          email,",
+				"          department_id,",
+				"          stipend",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> Select",
+				"Select sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['uncapped_extended.json'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> Sink"
+			]
+		}
+	}
+}

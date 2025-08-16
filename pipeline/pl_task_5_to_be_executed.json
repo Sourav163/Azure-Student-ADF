@@ -1,0 +1,19 @@
+{
+	"name": "pl_task_5_to_be_executed",
+	"properties": {
+		"activities": [
+			{
+				"name": "Wait",
+				"type": "Wait",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"waitTimeInSeconds": 1
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-08-13T10:22:42Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

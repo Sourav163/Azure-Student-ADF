@@ -1,0 +1,97 @@
+{
+	"name": "pl_task_1_json_format",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy Data MySQL",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "@{pipeline().parameters.table}"
+					},
+					{
+						"name": "Destination",
+						"value": "output//@{pipeline().parameters.table}.json"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "AzureMySqlSource",
+						"query": {
+							"value": "SELECT\n  REPLACE(REPLACE(modified, '\\\\', ''), '\"\"', '\"') AS cleaned_json\nFROM @{pipeline().parameters.table};",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".json"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"table_name": {
+								"value": "@pipeline().parameters.table",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": {
+								"value": "@{pipeline().parameters.table}.json",
+								"type": "Expression"
+							},
+							"dp_folder": "/",
+							"dp_container": "output",
+							"dp_is_1st_header": false,
+							"dp_quote_character": " ",
+							"dp_escape_character": " "
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"table": {
+				"type": "string",
+				"defaultValue": "json_format_tb"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-07-31T13:11:04Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

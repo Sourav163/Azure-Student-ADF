@@ -1,0 +1,61 @@
+{
+	"name": "pl_task_self_study_1_extended",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data Flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_task_self_study_1_extended",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"Source": {
+								"table_name": "transactions_ip_2"
+							},
+							"Sink": {
+								"dp_file": "output_file.json",
+								"dp_folder": "output_folder",
+								"dp_container": "output",
+								"dp_is_1st_header": false,
+								"dp_quote_character": {
+									"value": "@string(' ')",
+									"type": "Expression"
+								},
+								"dp_escape_character": {
+									"value": "@string(' ')",
+									"type": "Expression"
+								},
+								"dp_column_delimiter": ",",
+								"dp_row_delimiter": {
+									"value": "\n",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None",
+					"cacheSinks": {
+						"firstRowOnly": true
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-08-13T09:22:46Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

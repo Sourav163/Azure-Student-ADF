@@ -1,0 +1,51 @@
+{
+	"name": "df_task_4_json_unfold_dyn",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_json_file_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumn"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          intern_id as integer,",
+				"          intern_name as string,",
+				"          email as string,",
+				"          department_id as integer,",
+				"          stipend as decimal(10,2)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Source",
+				"Source derive(each(match(type=='string'), $$ = replace(replace(replace(iif(instr($$, '^') != 0, toString(split($$, '^')), $$), '[\"', concat('[{\"', $0, '\":\"')), '\",\"', concat('\"},{\"', $0, '\":\"')), '\"]', '\"}]'))) ~> DerivedColumn",
+				"DerivedColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['1_uncapped_extended_df.json'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> Sink"
+			]
+		}
+	}
+}

@@ -1,0 +1,91 @@
+{
+	"name": "df_task_self_study_1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumnDT"
+				},
+				{
+					"name": "WindowFunction"
+				},
+				{
+					"name": "Filter"
+				},
+				{
+					"name": "SurrogateKey"
+				},
+				{
+					"name": "DerivedColumnCalc"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          transaction_id as string,",
+				"          customer_id as integer,",
+				"          product_id as integer,",
+				"          transaction_date as string,",
+				"          quantity as integer,",
+				"          unit_price as decimal(10,2),",
+				"          status as string,",
+				"          created_at as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Source",
+				"Source derive(each(match(type=='string'), $0 = coalesce(toString(toDate($$, 'MM/dd/yyyy')), toString($$)))) ~> DerivedColumnDT",
+				"SurrogateKey window(over(transaction_id),",
+				"     asc(key, true),",
+				"     rnk = rank()) ~> WindowFunction",
+				"WindowFunction filter(rnk==1 && status == 'completed' && ! startsWith(transaction_id, 'TEST')) ~> Filter",
+				"DerivedColumnDT keyGenerate(output(key as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> SurrogateKey",
+				"Filter derive(total_amount = quantity*unit_price,",
+				"          load_date = currentUTC()) ~> DerivedColumnCalc",
+				"DerivedColumnCalc sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          transaction_id,",
+				"          customer_id,",
+				"          product_id,",
+				"          transaction_date,",
+				"          quantity,",
+				"          unit_price,",
+				"          total_amount,",
+				"          status,",
+				"          created_at,",
+				"          load_date",
+				"     )) ~> Sink"
+			]
+		}
+	}
+}

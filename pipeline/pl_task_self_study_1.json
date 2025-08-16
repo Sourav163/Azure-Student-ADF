@@ -1,0 +1,45 @@
+{
+	"name": "pl_task_self_study_1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data Flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_task_self_study_1",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"Source": {
+								"table_name": "transactions_ip_1"
+							},
+							"Sink": {
+								"table_name": "transactions_op_1"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None",
+					"cacheSinks": {
+						"firstRowOnly": true
+					}
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-08-13T04:46:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

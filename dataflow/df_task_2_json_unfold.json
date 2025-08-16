@@ -1,0 +1,94 @@
+{
+	"name": "df_task_2_json_unfold",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "AggregateTable"
+				},
+				{
+					"name": "AggregateSchema"
+				},
+				{
+					"name": "DerivedColumn"
+				},
+				{
+					"name": "Flatten"
+				},
+				{
+					"name": "AggregateColumns"
+				},
+				{
+					"name": "DerivedColumnHandleSingle"
+				},
+				{
+					"name": "AggregateMainColumn"
+				},
+				{
+					"name": "Sort"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     ip_table as string ('ip_project_tb'),",
+				"     op_table as string ('op_project_tb')",
+				"}",
+				"source(output(",
+				"          project_id as integer,",
+				"          updated_title as string,",
+				"          intern_id as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Source",
+				"Sort aggregate(ip_project_tb = collect(@(project_id=project_id, updated_title=updated_title, intern_id=intern_id))) ~> AggregateTable",
+				"AggregateTable aggregate(sourav_db = collect(@(ip_project_tb=ip_project_tb))) ~> AggregateSchema",
+				"Source derive(updated_title = split(updated_title, '^')) ~> DerivedColumn",
+				"DerivedColumn foldDown(unroll(updated_title, updated_title),",
+				"     mapColumn(",
+				"          project_id,",
+				"          updated_title,",
+				"          intern_id",
+				"     ),",
+				"     skipDuplicateMapInputs: false,",
+				"     skipDuplicateMapOutputs: false) ~> Flatten",
+				"Flatten aggregate(groupBy(project_id,",
+				"          intern_id),",
+				"     updated_title = collect(@(updated_title = updated_title))) ~> AggregateColumns",
+				"AggregateColumns derive(updated_title = toString(iif(isNull(updated_title[2]), updated_title[1].updated_title, toString(updated_title)))) ~> DerivedColumnHandleSingle",
+				"AggregateSchema aggregate(mysql_column = toString(collect(@(sourav_db=sourav_db)))) ~> AggregateMainColumn",
+				"DerivedColumnHandleSingle sort(asc(project_id, true)) ~> Sort",
+				"AggregateMainColumn sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     recreate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> Sink"
+			]
+		}
+	}
+}

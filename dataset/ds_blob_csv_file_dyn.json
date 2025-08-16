@@ -1,0 +1,82 @@
+{
+	"name": "ds_blob_csv_file_dyn",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sourav_blob_sa_1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dp_file": {
+				"type": "string"
+			},
+			"dp_folder": {
+				"type": "string"
+			},
+			"dp_container": {
+				"type": "string"
+			},
+			"dp_is_1st_header": {
+				"type": "bool",
+				"defaultValue": true
+			},
+			"dp_quote_character": {
+				"type": "string",
+				"defaultValue": "\""
+			},
+			"dp_escape_character": {
+				"type": "string",
+				"defaultValue": "\\"
+			},
+			"dp_column_delimiter": {
+				"type": "string",
+				"defaultValue": ","
+			},
+			"dp_row_delimiter": {
+				"type": "string",
+				"defaultValue": "\\n"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().dp_file",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().dp_folder",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().dp_container",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": {
+				"value": "@dataset().dp_column_delimiter",
+				"type": "Expression"
+			},
+			"rowDelimiter": {
+				"value": "@dataset().dp_row_delimiter",
+				"type": "Expression"
+			},
+			"compressionCodec": null,
+			"escapeChar": {
+				"value": "@dataset().dp_escape_character",
+				"type": "Expression"
+			},
+			"firstRowAsHeader": {
+				"value": "@dataset().dp_is_1st_header",
+				"type": "Expression"
+			},
+			"quoteChar": {
+				"value": "@dataset().dp_quote_character",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,12 @@
+{
+	"name": "ls_mysql_server_sourav_1",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureMySql",
+		"typeProperties": {
+			"connectionString": "server=adf-mysql-server-sourav2.mysql.database.azure.com;port=3306;database=sourav_db;uid=AdminSourav;sslmode=1;usesystemtruststore=0",
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQEIyMjgxRkM4LTBENDUtNDY3NS04QTVFLUFBMzA5RTFGQ0Q3Q183N2Q3MGFiNy00Y2Y1LTQ4MzMtOGEzNi0yYWUwNDI5NDZkZmUiDQp9"
+		}
+	}
+}

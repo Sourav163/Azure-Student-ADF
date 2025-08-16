@@ -1,0 +1,41 @@
+{
+	"name": "ds_blob_json_file_dyn",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sourav_blob_sa_1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dp_file": {
+				"type": "string"
+			},
+			"dp_folder": {
+				"type": "string"
+			},
+			"dp_container": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().dp_file",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().dp_folder",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().dp_container",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

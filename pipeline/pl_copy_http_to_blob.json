@@ -1,0 +1,99 @@
+{
+	"name": "pl_copy_http_to_blob",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy Data",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_http_url_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"endpoint": {
+								"value": "@concat(pipeline().parameters.CommonPart, pipeline().parameters.UncommonPart, pipeline().parameters.Extension)",
+								"type": "Expression"
+							},
+							"Relative_URL": "anshlambagit/ADFInterview/refs/heads/main/RawData/"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": {
+								"value": "@concat(pipeline().parameters.CommonPart, pipeline().parameters.UncommonPart, pipeline().parameters.Extension)",
+								"type": "Expression"
+							},
+							"dp_folder": "/",
+							"dp_container": "input",
+							"dp_is_1st_header": true,
+							"dp_quote_character": "\"",
+							"dp_escape_character": "\\"
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"CommonPart": {
+				"type": "string",
+				"defaultValue": "AdventureWorks_"
+			},
+			"UncommonPart": {
+				"type": "string",
+				"defaultValue": "Territories"
+			},
+			"Extension": {
+				"type": "string",
+				"defaultValue": ".csv"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-07-31T13:11:04Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

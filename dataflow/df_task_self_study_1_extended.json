@@ -1,0 +1,149 @@
+{
+	"name": "df_task_self_study_1_extended",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference"
+					},
+					"name": "Sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "DerivedColumnDT"
+				},
+				{
+					"name": "Filter"
+				},
+				{
+					"name": "DerivedColumnCalc"
+				},
+				{
+					"name": "AggregateHandleDuplicate"
+				},
+				{
+					"name": "DerivedColumnHandleObject"
+				},
+				{
+					"name": "SurrogateKeyID"
+				},
+				{
+					"name": "AggregateCount"
+				},
+				{
+					"name": "JoinCountID"
+				},
+				{
+					"name": "DerivedColumnHandleJSON"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          transaction_id as string,",
+				"          customer_id as integer,",
+				"          product_id as integer,",
+				"          transaction_date as string,",
+				"          quantity as integer,",
+				"          unit_price as decimal(10,2),",
+				"          status as string,",
+				"          created_at as timestamp",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> Source",
+				"Source derive(each(match(type=='string'), $0 = coalesce(\r",
+				"    toString(toDate(toString($$), 'dd/MM/yyyy')),\r",
+				"    toString(toDate(toString($$), 'MM/dd/yyyy')),\r",
+				"    toString(toDate(toString($$), 'yyyy/MM/dd')),\r",
+				"    toString(toDate(toString($$), 'yyyy-MM-dd')),\r",
+				"    toString(toDate(toString($$), 'dd-MMM-yyyy')),\r",
+				"    toString(toDate(toString($$), 'dd MMMM yyyy')),\r",
+				"    toString(toDate(toString($$), 'MMM dd, yyyy')),\r",
+				"    toString(toDate(toString($$), 'dd.MM.yyyy')),\r",
+				"    toString(toDate(toString($$), 'yyyyMMdd')),\r",
+				"    toString(toDate(toString($$), 'ddMMyyyy')),\r",
+				"    toString(toDate(toString($$), 'MMddyyyy')),\r",
+				"    toString(toDate(toString($$), 'yyyyddMM')),\r",
+				"    toString(toDate(toString($$), 'EEE, dd MMM yyyy')),\r",
+				"    toString(toDate(toString($$), 'EEEE, MMMM dd, yyyy')),\r",
+				"    toString($$)\r",
+				"))) ~> DerivedColumnDT",
+				"AggregateHandleDuplicate filter(status == 'completed' && !startsWith(transaction_id, 'TEST')) ~> Filter",
+				"Filter derive(total_amount = quantity*unit_price,",
+				"          loaded_at = toString(\r",
+				"    fromUTC(currentUTC(), 'Asia/Kolkata'),\r",
+				"    'yyyy-MM-dd HH:mm:ss'\r",
+				")) ~> DerivedColumnCalc",
+				"DerivedColumnDT aggregate(groupBy(transaction_id),",
+				"     each(match(name!='transaction_id'), $$ = min($$))) ~> AggregateHandleDuplicate",
+				"DerivedColumnCalc derive(each(match(true()), $$ = iif(\r",
+				"     $# == 1,\r",
+				"     concat('{\"', toString($0), '\":\"', toString($$), '\"'),\r",
+				"     iif(\r",
+				"          $# == size(columnNames()),\r",
+				"          concat('\"', toString($0), '\":\"', toString($$), '\"}'),\r",
+				"          concat('\"', toString($0), '\":\"', toString($$), '\"')\r",
+				"     )\r",
+				"))) ~> DerivedColumnHandleObject",
+				"DerivedColumnHandleObject keyGenerate(output(row_id as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> SurrogateKeyID",
+				"SurrogateKeyID aggregate(row_count = count(row_id)) ~> AggregateCount",
+				"AggregateCount, SurrogateKeyID join(true(),",
+				"     joinType:'cross',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinCountID",
+				"JoinCountID derive(each(match(true()), $$ = iif(\r",
+				"     instr(toString($$), '{') == 1,\r",
+				"     iif(\r",
+				"          row_id == 1,\r",
+				"          replace(toString($$), concat('{\"', toString($0)), concat('[{\"', toString($0))),\r",
+				"          concat(', ', toString($$))\r",
+				"     ),\r",
+				"     iif(\r",
+				"          instr(toString($$), '}') == length(toString($$)),\r",
+				"          iif(\r",
+				"               row_id == row_count,\r",
+				"               replace(toString($$), toString($$), concat(toString($$), ']')),\r",
+				"               toString($$)\r",
+				"          ),\r",
+				"          toString($$)\r",
+				"     )\r",
+				"))) ~> DerivedColumnHandleJSON",
+				"DerivedColumnHandleJSON sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     partitionFileNames:['output_file.json'],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     mapColumn(",
+				"          transaction_id,",
+				"          customer_id,",
+				"          product_id,",
+				"          transaction_date,",
+				"          quantity,",
+				"          unit_price,",
+				"          total_amount,",
+				"          status,",
+				"          created_at,",
+				"          loaded_at",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> Sink"
+			]
+		}
+	}
+}

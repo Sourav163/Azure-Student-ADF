@@ -1,0 +1,152 @@
+{
+	"name": "pl_task_2_dataflow",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data Flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_task_2_json_unfold",
+						"type": "DataFlowReference",
+						"parameters": {
+							"ip_table": "'ip_project_tb'",
+							"op_table": "'op_project_tb'"
+						},
+						"datasetParameters": {
+							"Source": {
+								"table_name": {
+									"value": "@pipeline().parameters.ip_table",
+									"type": "Expression"
+								}
+							},
+							"Sink": {
+								"table_name": {
+									"value": "@pipeline().parameters.op_table",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None",
+					"cacheSinks": {
+						"firstRowOnly": true
+					}
+				}
+			},
+			{
+				"name": "Copy Data",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Data Flow",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureMySqlSource",
+						"query": {
+							"value": "SELECT\n  REPLACE(REPLACE(REPLACE(mysql_column, '\\\\\"', '\"'), '\"[', '['), ']\"', ']')\n  AS mysql_column\nFROM @{pipeline().parameters.database}.@{pipeline().parameters.op_table};",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"table_name": {
+								"value": "@pipeline().parameters.op_table",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": {
+								"value": "@pipeline().parameters.op_json",
+								"type": "Expression"
+							},
+							"dp_folder": "uncapped_json_format",
+							"dp_container": "output",
+							"dp_is_1st_header": false,
+							"dp_quote_character": " ",
+							"dp_escape_character": " "
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"ip_table": {
+				"type": "string",
+				"defaultValue": "ip_project_tb"
+			},
+			"op_table": {
+				"type": "string",
+				"defaultValue": "op_project_tb"
+			},
+			"op_json": {
+				"type": "string",
+				"defaultValue": "uncapped.json"
+			},
+			"database": {
+				"type": "string",
+				"defaultValue": "sourav_db"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-07-31T13:11:04Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

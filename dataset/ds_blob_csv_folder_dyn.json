@@ -1,0 +1,45 @@
+{
+	"name": "ds_blob_csv_folder_dyn",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sourav_blob_sa_1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dp_folder": {
+				"type": "string"
+			},
+			"dp_container": {
+				"type": "string"
+			},
+			"dp_is_1st_header": {
+				"type": "bool",
+				"defaultValue": true
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"folderPath": {
+					"value": "@dataset().dp_folder",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().dp_container",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": {
+				"value": "@dataset().dp_is_1st_header",
+				"type": "Expression"
+			},
+			"quoteChar": "\""
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

@@ -1,0 +1,250 @@
+{
+	"name": "pl_task_4_dataflow",
+	"properties": {
+		"activities": [
+			{
+				"name": "Data Flow",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_task_4_json_unfold_dyn",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"Source": {
+								"table_name": "ip_intern_tb"
+							},
+							"Sink": {
+								"dp_file": "1_uncapped_extended_df.json",
+								"dp_folder": "uncapped_json_format",
+								"dp_container": "output"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "None",
+					"cacheSinks": {
+						"firstRowOnly": true
+					}
+				}
+			},
+			{
+				"name": "Copy Data JSON",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Data Flow",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings",
+							"filePattern": "arrayOfObjects"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_blob_json_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "1_uncapped_extended_df.json",
+							"dp_folder": "uncapped_json_format",
+							"dp_container": "output"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_blob_json_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "2_uncapped_extended_pl.json",
+							"dp_folder": "uncapped_json_format",
+							"dp_container": "output"
+						}
+					}
+				]
+			},
+			{
+				"name": "Lookup",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Copy Data JSON",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_blob_json_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "2_uncapped_extended_pl.json",
+							"dp_folder": "uncapped_json_format",
+							"dp_container": "output"
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Copy Data Table",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Lookup",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureMySqlSource",
+						"query": {
+							"value": "DROP TABLE IF EXISTS sourav_db.op_intern_tb;\nCREATE TABLE sourav_db.op_intern_tb (mysql_column LONGTEXT);\n\nINSERT INTO sourav_db.op_intern_tb VALUES\n('@{activity('Lookup').output.value}');\n\nSELECT REPLACE(REPLACE(mysql_column, '\"[', '['), ']\"', ']') col\nFROM sourav_db.op_intern_tb;",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "col",
+									"type": "String"
+								},
+								"sink": {
+									"type": "String",
+									"physicalType": "String",
+									"ordinal": 1
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"table_name": "ip_intern_tb"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "3_uncapped_extended_pl.json",
+							"dp_folder": "uncapped_json_format",
+							"dp_container": "output",
+							"dp_is_1st_header": false,
+							"dp_quote_character": {
+								"value": "@string('')",
+								"type": "Expression"
+							},
+							"dp_escape_character": "@string('')",
+							"dp_column_delimiter": ",",
+							"dp_row_delimiter": {
+								"value": "\n",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2025-08-07T09:29:58Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

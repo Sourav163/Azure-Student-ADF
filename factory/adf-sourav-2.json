@@ -1,0 +1,9 @@
+{
+	"name": "adf-sourav-2",
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "a1dc7f83-3fc9-4708-ab94-5f9c2f4fbe99",
+		"tenantId": "067f959b-7aae-49da-9fe0-a811f8484519"
+	}
+}
