@@ -1,0 +1,1063 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "adf-sourav-2"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/df_task_4_json_unfold_dyn_optimized')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Source"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_csv_file_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DerivedColumn"
+						},
+						{
+							"name": "DerivedColumnHandleObject"
+						},
+						{
+							"name": "DerivedColumnHandleQuote"
+						},
+						{
+							"name": "AggregateCount"
+						},
+						{
+							"name": "SurrogateKeyID"
+						},
+						{
+							"name": "DerivedColumnHandleJSON"
+						},
+						{
+							"name": "JoinCountID"
+						},
+						{
+							"name": "Select"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          intern_id as integer,",
+						"          intern_name as string,",
+						"          email as string,",
+						"          department_id as integer,",
+						"          stipend as decimal(10,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> Source",
+						"Source derive(each(match(type=='string'), $$ = replace(\r",
+						"    replace(\r",
+						"        replace(\r",
+						"            iif(\r",
+						"                instr($$, '^') != 0,\r",
+						"                toString(split($$, '^')),\r",
+						"                $$\r",
+						"            ), '[\"', concat('[{\"', $0, '\":\"')\r",
+						"        ), '\",\"', concat('\"},{\"', $0, '\":\"')\r",
+						"    ), '\"]', '\"}]'\r",
+						"))) ~> DerivedColumn",
+						"DerivedColumn derive(each(match(true()), $$ = iif(\r",
+						"     $# == 1,\r",
+						"     concat('{\"', toString($0), '\":\"', toString($$), '\"'),\r",
+						"     iif(\r",
+						"          $# == size(columnNames()),\r",
+						"          concat('\"', toString($0), '\":\"', toString($$), '\"}'),\r",
+						"          concat('\"', toString($0), '\":\"', toString($$), '\"')\r",
+						"     )\r",
+						"))) ~> DerivedColumnHandleObject",
+						"DerivedColumnHandleObject derive(each(match(type=='string'), $$ = replace(replace($$, '\"[', '['), ']\"', ']'))) ~> DerivedColumnHandleQuote",
+						"SurrogateKeyID aggregate(cnt = count(id)) ~> AggregateCount",
+						"DerivedColumnHandleQuote keyGenerate(output(id as long),",
+						"     startAt: 1L,",
+						"     stepValue: 1L) ~> SurrogateKeyID",
+						"JoinCountID derive(each(match(true()), $$ = iif(\r",
+						"     instr(toString($$), '{') == 1,\r",
+						"     iif(\r",
+						"          id == 1,\r",
+						"          replace(toString($$), concat('{\"', toString($0)), concat('[{\"', toString($0))),\r",
+						"          concat(', ', toString($$))\r",
+						"     ),\r",
+						"     iif(\r",
+						"          instr(toString($$), '}') == length(toString($$)),\r",
+						"          iif(\r",
+						"               id == cnt,\r",
+						"               replace(toString($$), toString($$), concat(toString($$), ']')),\r",
+						"               toString($$)\r",
+						"          ),\r",
+						"          toString($$)\r",
+						"     )\r",
+						"))) ~> DerivedColumnHandleJSON",
+						"AggregateCount, SurrogateKeyID join(true(),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinCountID",
+						"DerivedColumnHandleJSON select(mapColumn(",
+						"          intern_id,",
+						"          intern_name,",
+						"          email,",
+						"          department_id,",
+						"          stipend",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> Select",
+						"Select sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['uncapped_extended.json'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Sink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_task_self_study_1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Source"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DerivedColumnDT"
+						},
+						{
+							"name": "WindowFunction"
+						},
+						{
+							"name": "Filter"
+						},
+						{
+							"name": "SurrogateKey"
+						},
+						{
+							"name": "DerivedColumnCalc"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          transaction_id as string,",
+						"          customer_id as integer,",
+						"          product_id as integer,",
+						"          transaction_date as string,",
+						"          quantity as integer,",
+						"          unit_price as decimal(10,2),",
+						"          status as string,",
+						"          created_at as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> Source",
+						"Source derive(each(match(type=='string'), $0 = coalesce(toString(toDate($$, 'MM/dd/yyyy')), toString($$)))) ~> DerivedColumnDT",
+						"SurrogateKey window(over(transaction_id),",
+						"     asc(key, true),",
+						"     rnk = rank()) ~> WindowFunction",
+						"WindowFunction filter(rnk==1 && status == 'completed' && ! startsWith(transaction_id, 'TEST')) ~> Filter",
+						"DerivedColumnDT keyGenerate(output(key as long),",
+						"     startAt: 1L,",
+						"     stepValue: 1L) ~> SurrogateKey",
+						"Filter derive(total_amount = quantity*unit_price,",
+						"          load_date = currentUTC()) ~> DerivedColumnCalc",
+						"DerivedColumnCalc sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     recreate:true,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          transaction_id,",
+						"          customer_id,",
+						"          product_id,",
+						"          transaction_date,",
+						"          quantity,",
+						"          unit_price,",
+						"          total_amount,",
+						"          status,",
+						"          created_at,",
+						"          load_date",
+						"     )) ~> Sink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_task_self_study_1_extended')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Source"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_csv_file_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DerivedColumnDT"
+						},
+						{
+							"name": "Filter"
+						},
+						{
+							"name": "DerivedColumnCalc"
+						},
+						{
+							"name": "AggregateHandleDuplicate"
+						},
+						{
+							"name": "DerivedColumnHandleObject"
+						},
+						{
+							"name": "SurrogateKeyID"
+						},
+						{
+							"name": "AggregateCount"
+						},
+						{
+							"name": "JoinCountID"
+						},
+						{
+							"name": "DerivedColumnHandleJSON"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          transaction_id as string,",
+						"          customer_id as integer,",
+						"          product_id as integer,",
+						"          transaction_date as string,",
+						"          quantity as integer,",
+						"          unit_price as decimal(10,2),",
+						"          status as string,",
+						"          created_at as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> Source",
+						"Source derive(each(match(type=='string'), $0 = coalesce(\r",
+						"    toString(toDate(toString($$), 'dd/MM/yyyy')),\r",
+						"    toString(toDate(toString($$), 'MM/dd/yyyy')),\r",
+						"    toString(toDate(toString($$), 'yyyy/MM/dd')),\r",
+						"    toString(toDate(toString($$), 'yyyy-MM-dd')),\r",
+						"    toString(toDate(toString($$), 'dd-MMM-yyyy')),\r",
+						"    toString(toDate(toString($$), 'dd MMMM yyyy')),\r",
+						"    toString(toDate(toString($$), 'MMM dd, yyyy')),\r",
+						"    toString(toDate(toString($$), 'dd.MM.yyyy')),\r",
+						"    toString(toDate(toString($$), 'yyyyMMdd')),\r",
+						"    toString(toDate(toString($$), 'ddMMyyyy')),\r",
+						"    toString(toDate(toString($$), 'MMddyyyy')),\r",
+						"    toString(toDate(toString($$), 'yyyyddMM')),\r",
+						"    toString(toDate(toString($$), 'EEE, dd MMM yyyy')),\r",
+						"    toString(toDate(toString($$), 'EEEE, MMMM dd, yyyy')),\r",
+						"    toString($$)\r",
+						"))) ~> DerivedColumnDT",
+						"AggregateHandleDuplicate filter(status == 'completed' && !startsWith(transaction_id, 'TEST')) ~> Filter",
+						"Filter derive(total_amount = quantity*unit_price,",
+						"          loaded_at = toString(\r",
+						"    fromUTC(currentUTC(), 'Asia/Kolkata'),\r",
+						"    'yyyy-MM-dd HH:mm:ss'\r",
+						")) ~> DerivedColumnCalc",
+						"DerivedColumnDT aggregate(groupBy(transaction_id),",
+						"     each(match(name!='transaction_id'), $$ = min($$))) ~> AggregateHandleDuplicate",
+						"DerivedColumnCalc derive(each(match(true()), $$ = iif(\r",
+						"     $# == 1,\r",
+						"     concat('{\"', toString($0), '\":\"', toString($$), '\"'),\r",
+						"     iif(\r",
+						"          $# == size(columnNames()),\r",
+						"          concat('\"', toString($0), '\":\"', toString($$), '\"}'),\r",
+						"          concat('\"', toString($0), '\":\"', toString($$), '\"')\r",
+						"     )\r",
+						"))) ~> DerivedColumnHandleObject",
+						"DerivedColumnHandleObject keyGenerate(output(row_id as long),",
+						"     startAt: 1L,",
+						"     stepValue: 1L) ~> SurrogateKeyID",
+						"SurrogateKeyID aggregate(row_count = count(row_id)) ~> AggregateCount",
+						"AggregateCount, SurrogateKeyID join(true(),",
+						"     joinType:'cross',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinCountID",
+						"JoinCountID derive(each(match(true()), $$ = iif(\r",
+						"     instr(toString($$), '{') == 1,\r",
+						"     iif(\r",
+						"          row_id == 1,\r",
+						"          replace(toString($$), concat('{\"', toString($0)), concat('[{\"', toString($0))),\r",
+						"          concat(', ', toString($$))\r",
+						"     ),\r",
+						"     iif(\r",
+						"          instr(toString($$), '}') == length(toString($$)),\r",
+						"          iif(\r",
+						"               row_id == row_count,\r",
+						"               replace(toString($$), toString($$), concat(toString($$), ']')),\r",
+						"               toString($$)\r",
+						"          ),\r",
+						"          toString($$)\r",
+						"     )\r",
+						"))) ~> DerivedColumnHandleJSON",
+						"DerivedColumnHandleJSON sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['output_file.json'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          transaction_id,",
+						"          customer_id,",
+						"          product_id,",
+						"          transaction_date,",
+						"          quantity,",
+						"          unit_price,",
+						"          total_amount,",
+						"          status,",
+						"          created_at,",
+						"          loaded_at",
+						"     ),",
+						"     partitionBy('hash', 1)) ~> Sink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_task_2_dataflow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_task_2_json_unfold",
+								"type": "DataFlowReference",
+								"parameters": {
+									"ip_table": "'ip_project_tb'",
+									"op_table": "'op_project_tb'"
+								},
+								"datasetParameters": {
+									"Source": {
+										"table_name": {
+											"value": "@pipeline().parameters.ip_table",
+											"type": "Expression"
+										}
+									},
+									"Sink": {
+										"table_name": {
+											"value": "@pipeline().parameters.op_table",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					},
+					{
+						"name": "Copy Data",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data Flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureMySqlSource",
+								"query": {
+									"value": "SELECT\n  REPLACE(REPLACE(REPLACE(mysql_column, '\\\\\"', '\"'), '\"[', '['), ']\"', ']')\n  AS mysql_column\nFROM @{pipeline().parameters.database}.@{pipeline().parameters.op_table};",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": {
+										"value": "@pipeline().parameters.op_table",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_blob_csv_file_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"dp_file": {
+										"value": "@pipeline().parameters.op_json",
+										"type": "Expression"
+									},
+									"dp_folder": "uncapped_json_format",
+									"dp_container": "output",
+									"dp_is_1st_header": false,
+									"dp_quote_character": " ",
+									"dp_escape_character": " "
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"ip_table": {
+						"type": "string",
+						"defaultValue": "ip_project_tb"
+					},
+					"op_table": {
+						"type": "string",
+						"defaultValue": "op_project_tb"
+					},
+					"op_json": {
+						"type": "string",
+						"defaultValue": "uncapped.json"
+					},
+					"database": {
+						"type": "string",
+						"defaultValue": "sourav_db"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-07-31T13:11:04Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_task_3_dataflow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_task_3_json_unfold_multi_col",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Source": {
+										"table_name": "ip_intern_tb"
+									},
+									"Sink": {
+										"dp_file": "uncapped_extended.json",
+										"dp_folder": "uncapped_json_format",
+										"dp_container": "output",
+										"dp_is_1st_header": false,
+										"dp_quote_character": {
+											"value": "@string('')",
+											"type": "Expression"
+										},
+										"dp_escape_character": "@string('')",
+										"dp_column_delimiter": "@string('')",
+										"dp_row_delimiter": "@string('')"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-08-04T06:18:53Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_task_4_dataflow')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_task_4_json_unfold_dyn",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Source": {
+										"table_name": "ip_intern_tb"
+									},
+									"Sink": {
+										"dp_file": "1_uncapped_extended_df.json",
+										"dp_folder": "uncapped_json_format",
+										"dp_container": "output"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					},
+					{
+						"name": "Copy Data JSON",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Data Flow",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings",
+									"filePattern": "arrayOfObjects"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_blob_json_file_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"dp_file": "1_uncapped_extended_df.json",
+									"dp_folder": "uncapped_json_format",
+									"dp_container": "output"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_blob_json_file_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"dp_file": "2_uncapped_extended_pl.json",
+									"dp_folder": "uncapped_json_format",
+									"dp_container": "output"
+								}
+							}
+						]
+					},
+					{
+						"name": "Lookup",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Copy Data JSON",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "ds_blob_json_file_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"dp_file": "2_uncapped_extended_pl.json",
+									"dp_folder": "uncapped_json_format",
+									"dp_container": "output"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Copy Data Table",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Lookup",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureMySqlSource",
+								"query": {
+									"value": "DROP TABLE IF EXISTS sourav_db.op_intern_tb;\nCREATE TABLE sourav_db.op_intern_tb (mysql_column LONGTEXT);\n\nINSERT INTO sourav_db.op_intern_tb VALUES\n('@{activity('Lookup').output.value}');\n\nSELECT REPLACE(REPLACE(mysql_column, '\"[', '['), ']\"', ']') col\nFROM sourav_db.op_intern_tb;",
+									"type": "Expression"
+								},
+								"queryTimeout": "02:00:00"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "col",
+											"type": "String"
+										},
+										"sink": {
+											"type": "String",
+											"physicalType": "String",
+											"ordinal": 1
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"table_name": "ip_intern_tb"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_blob_csv_file_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"dp_file": "3_uncapped_extended_pl.json",
+									"dp_folder": "uncapped_json_format",
+									"dp_container": "output",
+									"dp_is_1st_header": false,
+									"dp_quote_character": {
+										"value": "@string('')",
+										"type": "Expression"
+									},
+									"dp_escape_character": "@string('')",
+									"dp_column_delimiter": ",",
+									"dp_row_delimiter": {
+										"value": "\n",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-08-07T09:29:58Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_task_4_dataflow_optimized')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_task_4_json_unfold_dyn_optimized",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Source": {
+										"table_name": "ip_intern_tb"
+									},
+									"Sink": {
+										"dp_file": "uncapped_extended.json",
+										"dp_folder": "uncapped_json_format",
+										"dp_container": "output",
+										"dp_is_1st_header": false,
+										"dp_quote_character": {
+											"value": "@string(' ')",
+											"type": "Expression"
+										},
+										"dp_escape_character": {
+											"value": "@string(' ')",
+											"type": "Expression"
+										},
+										"dp_column_delimiter": ",",
+										"dp_row_delimiter": {
+											"value": "\n",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-08-07T10:42:37Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_task_4_json_unfold_dyn_optimized')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_task_self_study_1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_task_self_study_1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Source": {
+										"table_name": "transactions_ip_1"
+									},
+									"Sink": {
+										"table_name": "transactions_op_1"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-08-13T04:46:43Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_task_self_study_1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_task_self_study_1_extended')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_task_self_study_1_extended",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Source": {
+										"table_name": "transactions_ip_2"
+									},
+									"Sink": {
+										"dp_file": "output_file.json",
+										"dp_folder": "output_folder",
+										"dp_container": "output",
+										"dp_is_1st_header": false,
+										"dp_quote_character": {
+											"value": "@string(' ')",
+											"type": "Expression"
+										},
+										"dp_escape_character": {
+											"value": "@string(' ')",
+											"type": "Expression"
+										},
+										"dp_column_delimiter": ",",
+										"dp_row_delimiter": {
+											"value": "\n",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "None",
+							"cacheSinks": {
+								"firstRowOnly": true
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-08-13T09:22:46Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_task_self_study_1_extended')]"
+			]
+		}
+	]
+}
