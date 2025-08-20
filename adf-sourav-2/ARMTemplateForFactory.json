@@ -25,6 +25,29 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_00_demo')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Wait1",
+						"type": "Wait",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"waitTimeInSeconds": 1
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_copy_extra_input_file_filter')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1359,14 +1382,16 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_task_5_execute_pipeline')]",
+			"name": "[concat(parameters('factoryName'), '/pl_task_5_execute_pipeline_solution1')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "Lookup",
+						"name": "Lookup JSON",
 						"type": "Lookup",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
 						"dependsOn": [
 							{
 								"activity": "Execute Pipeline 0",
@@ -1412,7 +1437,13 @@
 						"type": "ForEach",
 						"dependsOn": [
 							{
-								"activity": "Lookup",
+								"activity": "Lookup JSON",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "Lookup CSV",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -1421,7 +1452,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"items": {
-								"value": "@activity('Lookup').output.value",
+								"value": "@activity('Lookup CSV').output.value",
 								"type": "Expression"
 							},
 							"isSequential": true,
@@ -1581,6 +1612,54 @@
 							"waitOnCompletion": true,
 							"parameters": {}
 						}
+					},
+					{
+						"name": "Lookup CSV",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Execute Pipeline 0",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "DelimitedTextSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "DelimitedTextReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "ds_blob_csv_file_dyn",
+								"type": "DatasetReference",
+								"parameters": {
+									"dp_file": "pipelines_to_run.csv",
+									"dp_folder": "/",
+									"dp_container": "input",
+									"dp_is_1st_header": true,
+									"dp_quote_character": "\"",
+									"dp_escape_character": "\\",
+									"dp_column_delimiter": ",",
+									"dp_row_delimiter": "@base64ToString('DQo=')"
+								}
+							},
+							"firstRowOnly": false
+						}
 					}
 				],
 				"policy": {
@@ -1591,11 +1670,12 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_blob_json_file_dyn')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_task_5_to_be_executed')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_task_5_to_be_executed')]",
+				"[concat(variables('factoryId'), '/datasets/ds_blob_csv_file_dyn')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_task_5_execute_pipeline_copy1')]",
+			"name": "[concat(parameters('factoryName'), '/pl_task_5_execute_pipeline_problem')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1942,7 +2022,7 @@
 					},
 					"dp_row_delimiter": {
 						"type": "string",
-						"defaultValue": "\\n"
+						"defaultValue": "@base64ToString('DQo=')"
 					}
 				},
 				"annotations": [],
@@ -2855,18 +2935,184 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_00_demo')]",
+			"name": "[concat(parameters('factoryName'), '/pl_task_5_execute_pipeline_solution2')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "Wait1",
-						"type": "Wait",
-						"dependsOn": [],
+						"name": "ForEach",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Execute Pipeline 0",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"userProperties": [],
 						"typeProperties": {
-							"waitTimeInSeconds": 1
+							"items": {
+								"value": "@pipeline().globalParameters.gp_pipelines_to_run",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Switch",
+									"type": "Switch",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"on": {
+											"value": "@item()",
+											"type": "Expression"
+										},
+										"cases": [
+											{
+												"value": "Execute Pipeline 1",
+												"activities": [
+													{
+														"name": "Execute Pipeline 1",
+														"type": "ExecutePipeline",
+														"dependsOn": [],
+														"policy": {
+															"secureInput": false
+														},
+														"userProperties": [],
+														"typeProperties": {
+															"pipeline": {
+																"referenceName": "pl_task_5_to_be_executed",
+																"type": "PipelineReference"
+															},
+															"waitOnCompletion": false,
+															"parameters": {}
+														}
+													}
+												]
+											},
+											{
+												"value": "Execute Pipeline 2",
+												"activities": [
+													{
+														"name": "Execute Pipeline 2",
+														"type": "ExecutePipeline",
+														"dependsOn": [],
+														"policy": {
+															"secureInput": false
+														},
+														"userProperties": [],
+														"typeProperties": {
+															"pipeline": {
+																"referenceName": "pl_task_5_to_be_executed",
+																"type": "PipelineReference"
+															},
+															"waitOnCompletion": false,
+															"parameters": {}
+														}
+													}
+												]
+											},
+											{
+												"value": "Execute Pipeline 3",
+												"activities": [
+													{
+														"name": "Execute Pipeline 3",
+														"type": "ExecutePipeline",
+														"dependsOn": [],
+														"policy": {
+															"secureInput": false
+														},
+														"userProperties": [],
+														"typeProperties": {
+															"pipeline": {
+																"referenceName": "pl_task_5_to_be_executed",
+																"type": "PipelineReference"
+															},
+															"waitOnCompletion": false,
+															"parameters": {}
+														}
+													}
+												]
+											},
+											{
+												"value": "Execute Pipeline 4",
+												"activities": [
+													{
+														"name": "Execute Pipeline 4",
+														"type": "ExecutePipeline",
+														"dependsOn": [],
+														"policy": {
+															"secureInput": false
+														},
+														"userProperties": [],
+														"typeProperties": {
+															"pipeline": {
+																"referenceName": "pl_task_5_to_be_executed",
+																"type": "PipelineReference"
+															},
+															"waitOnCompletion": false,
+															"parameters": {}
+														}
+													}
+												]
+											},
+											{
+												"value": "Execute Pipeline 5",
+												"activities": [
+													{
+														"name": "Execute Pipeline 5",
+														"type": "ExecutePipeline",
+														"dependsOn": [],
+														"policy": {
+															"secureInput": false
+														},
+														"userProperties": [],
+														"typeProperties": {
+															"pipeline": {
+																"referenceName": "pl_task_5_to_be_executed",
+																"type": "PipelineReference"
+															},
+															"waitOnCompletion": false,
+															"parameters": {}
+														}
+													}
+												]
+											}
+										],
+										"defaultActivities": [
+											{
+												"name": "Fail",
+												"type": "Fail",
+												"dependsOn": [],
+												"userProperties": [],
+												"typeProperties": {
+													"message": "Pipeline Execution Failed due to Wrong File Name Input",
+													"errorCode": "1806530"
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Execute Pipeline 0",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_task_5_to_be_executed",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
 						}
 					}
 				],
@@ -2875,7 +3121,9 @@
 				},
 				"annotations": []
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_task_5_to_be_executed')]"
+			]
 		}
 	]
 }
