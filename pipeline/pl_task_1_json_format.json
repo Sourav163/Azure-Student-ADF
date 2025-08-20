@@ -77,8 +77,19 @@
 							"dp_folder": "/",
 							"dp_container": "output",
 							"dp_is_1st_header": false,
-							"dp_quote_character": " ",
-							"dp_escape_character": " "
+							"dp_quote_character": {
+								"value": "@string('')",
+								"type": "Expression"
+							},
+							"dp_escape_character": {
+								"value": "@string('')",
+								"type": "Expression"
+							},
+							"dp_column_delimiter": ",",
+							"dp_row_delimiter": {
+								"value": "@base64ToString('DQo=')",
+								"type": "Expression"
+							}
 						}
 					}
 				]
