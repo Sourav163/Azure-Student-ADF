@@ -1,5 +1,17 @@
 {
 	"name": "adf-sourav-2",
+	"properties": {
+		"globalParameters": {
+			"gp_pipelines_to_run": {
+				"type": "array",
+				"value": [
+					"Execute Pipeline 1",
+					"Execute Pipeline 3",
+					"Execute Pipeline 4"
+				]
+			}
+		}
+	},
 	"location": "centralindia",
 	"identity": {
 		"type": "SystemAssigned",
