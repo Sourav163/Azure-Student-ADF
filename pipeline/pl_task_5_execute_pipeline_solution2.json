@@ -1,0 +1,177 @@
+{
+	"name": "pl_task_5_execute_pipeline_solution2",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Execute Pipeline 0",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().globalParameters.gp_pipelines_to_run",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Switch",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@item()",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "Execute Pipeline 1",
+										"activities": [
+											{
+												"name": "Execute Pipeline 1",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_task_5_to_be_executed",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": false
+												}
+											}
+										]
+									},
+									{
+										"value": "Execute Pipeline 2",
+										"activities": [
+											{
+												"name": "Execute Pipeline 2",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_task_5_to_be_executed",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": false
+												}
+											}
+										]
+									},
+									{
+										"value": "Execute Pipeline 3",
+										"activities": [
+											{
+												"name": "Execute Pipeline 3",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_task_5_to_be_executed",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": false
+												}
+											}
+										]
+									},
+									{
+										"value": "Execute Pipeline 4",
+										"activities": [
+											{
+												"name": "Execute Pipeline 4",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_task_5_to_be_executed",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": false
+												}
+											}
+										]
+									},
+									{
+										"value": "Execute Pipeline 5",
+										"activities": [
+											{
+												"name": "Execute Pipeline 5",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "pl_task_5_to_be_executed",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": false
+												}
+											}
+										]
+									}
+								],
+								"defaultActivities": [
+									{
+										"name": "Fail",
+										"type": "Fail",
+										"dependsOn": [],
+										"userProperties": [],
+										"typeProperties": {
+											"message": "Pipeline Execution Failed due to Wrong File Name Input",
+											"errorCode": "1806530"
+										}
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Execute Pipeline 0",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_task_5_to_be_executed",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"annotations": []
+	}
+}
