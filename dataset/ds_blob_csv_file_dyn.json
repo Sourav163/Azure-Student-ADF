@@ -33,7 +33,7 @@
 			},
 			"dp_row_delimiter": {
 				"type": "string",
-				"defaultValue": "\\n"
+				"defaultValue": "@base64ToString('DQo=')"
 			}
 		},
 		"annotations": [],
