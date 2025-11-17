@@ -74,6 +74,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     mapColumn(",
+				"          transaction_id,",
 				"          customer_id,",
 				"          product_id,",
 				"          transaction_date,",
