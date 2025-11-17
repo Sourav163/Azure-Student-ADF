@@ -274,7 +274,6 @@
 						"     skipDuplicateMapInputs: true,",
 						"     skipDuplicateMapOutputs: true,",
 						"     mapColumn(",
-						"          transaction_id,",
 						"          customer_id,",
 						"          product_id,",
 						"          transaction_date,",
@@ -567,8 +566,16 @@
 									"dp_folder": "uncapped_json_format",
 									"dp_container": "output",
 									"dp_is_1st_header": false,
-									"dp_quote_character": " ",
-									"dp_escape_character": " "
+									"dp_quote_character": {
+										"value": "@string('')",
+										"type": "Expression"
+									},
+									"dp_escape_character": {
+										"value": "@string('')",
+										"type": "Expression"
+									},
+									"dp_column_delimiter": ",",
+									"dp_row_delimiter": "@base64ToString('DQo=')"
 								}
 							}
 						]
