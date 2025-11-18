@@ -3,12 +3,44 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Wait1",
-				"type": "Wait",
+				"name": "Data Flow",
+				"type": "ExecuteDataFlow",
 				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
 				"userProperties": [],
 				"typeProperties": {
-					"waitTimeInSeconds": 1
+					"dataflow": {
+						"referenceName": "df_00_demo",
+						"type": "DataFlowReference",
+						"parameters": {
+							"run_id": "'default'",
+							"batch_nm": 1
+						},
+						"datasetParameters": {
+							"SourceDB": {
+								"table_name": "demo_tb"
+							},
+							"Jsontgt": {
+								"dp_folder": "try/outbound",
+								"dp_container": "output",
+								"dp_is_1st_header": true
+							},
+							"successtgt": {
+								"table_name": "demo_op_tb"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
 				}
 			}
 		],
