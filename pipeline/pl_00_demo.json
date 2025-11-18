@@ -29,7 +29,7 @@
 							"Jsontgt": {
 								"dp_folder": "try/outbound",
 								"dp_container": "output",
-								"dp_is_1st_header": true
+								"dp_is_1st_header": "0"
 							},
 							"successtgt": {
 								"table_name": "demo_op_tb"

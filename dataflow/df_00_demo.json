@@ -61,7 +61,7 @@
 				"skCount derive(batch_dc = floor((rn - 1) / 45) + 1,",
 				"          run_id = $run_id,",
 				"          model_name = 'try',",
-				"          create_date = currentUTC()) ~> dcBatch",
+				"          create_date = create_date) ~> dcBatch",
 				"derivedFilenms aggregate(groupBy(batch_dc,",
 				"          file_nms),",
 				"     json = concat('{\"TRYCaseList\":',replace(replace(replace(replace(unescape(toString(collect(create_date)),'json'),'\"]}',']}'),'\"}}\"','\"}}'),'[\"{\"','[{\"'),'\"{\"ad','{\"ad'), '}')) ~> aggregateCollect",
@@ -83,13 +83,7 @@
 				"     upsertable:false,",
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true,",
-				"     mapColumn(",
-				"          run_id,",
-				"          model_name,",
-				"          event_id,",
-				"          create_date",
-				"     )) ~> successtgt"
+				"     skipDuplicateMapOutputs: true) ~> successtgt"
 			]
 		}
 	}
