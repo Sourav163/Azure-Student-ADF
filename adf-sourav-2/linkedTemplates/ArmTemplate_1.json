@@ -13,60 +13,6 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/df_task_4_json_unfold_dyn')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "ds_mysql_tb_dyn",
-								"type": "DatasetReference"
-							},
-							"name": "Source"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ds_blob_json_file_dyn",
-								"type": "DatasetReference"
-							},
-							"name": "Sink"
-						}
-					],
-					"transformations": [
-						{
-							"name": "DerivedColumn"
-						}
-					],
-					"scriptLines": [
-						"source(output(",
-						"          intern_id as integer,",
-						"          intern_name as string,",
-						"          email as string,",
-						"          department_id as integer,",
-						"          stipend as decimal(10,2)",
-						"     ),",
-						"     allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     isolationLevel: 'READ_UNCOMMITTED',",
-						"     format: 'table') ~> Source",
-						"Source derive(each(match(type=='string'), $$ = replace(replace(replace(iif(instr($$, '^') != 0, toString(split($$, '^')), $$), '[\"', concat('[{\"', $0, '\":\"')), '\",\"', concat('\"},{\"', $0, '\":\"')), '\"]', '\"}]'))) ~> DerivedColumn",
-						"DerivedColumn sink(allowSchemaDrift: true,",
-						"     validateSchema: false,",
-						"     partitionFileNames:['1_uncapped_extended_df.json'],",
-						"     skipDuplicateMapInputs: true,",
-						"     skipDuplicateMapOutputs: true,",
-						"     partitionBy('hash', 1)) ~> Sink"
-					]
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/df_task_4_json_unfold_dyn_optimized')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -441,6 +387,163 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_00_demo')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "SourceDB"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_csv_folder_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Jsontgt"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "successtgt"
+						}
+					],
+					"transformations": [
+						{
+							"name": "skCount"
+						},
+						{
+							"name": "dcBatch"
+						},
+						{
+							"name": "aggregateCollect"
+						},
+						{
+							"name": "derivedFilenms"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     run_id as string ('default'),",
+						"     batch_nm as integer (1)",
+						"}",
+						"source(output(",
+						"          event_id as integer,",
+						"          create_date as date",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> SourceDB",
+						"SourceDB keyGenerate(output(rn as long),",
+						"     startAt: 1L,",
+						"     stepValue: 1L) ~> skCount",
+						"skCount derive(batch_dc = floor((rn - 1) / 45) + 1,",
+						"          run_id = $run_id,",
+						"          model_name = 'try',",
+						"          create_date = currentUTC()) ~> dcBatch",
+						"derivedFilenms aggregate(groupBy(batch_dc,",
+						"          file_nms),",
+						"     json = concat('{\"TRYCaseList\":',replace(replace(replace(replace(unescape(toString(collect(create_date)),'json'),'\"]}',']}'),'\"}}\"','\"}}'),'[\"{\"','[{\"'),'\"{\"ad','{\"ad'), '}')) ~> aggregateCollect",
+						"dcBatch derive(file_nms = 'try/outbound/TRY_MODEL_'+toString(batch_dc)+'_'+toString($batch_nm)+'.json') ~> derivedFilenms",
+						"aggregateCollect sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     rowUrlColumn:'file_nms',",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          json",
+						"     ),",
+						"     preCommands: [],",
+						"     postCommands: []) ~> Jsontgt",
+						"dcBatch sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     mapColumn(",
+						"          run_id,",
+						"          model_name,",
+						"          event_id,",
+						"          create_date",
+						"     )) ~> successtgt"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_00_demo')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Data Flow",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_00_demo",
+								"type": "DataFlowReference",
+								"parameters": {
+									"run_id": "'default'",
+									"batch_nm": 1
+								},
+								"datasetParameters": {
+									"SourceDB": {
+										"table_name": "demo_tb"
+									},
+									"Jsontgt": {
+										"dp_folder": "try/outbound",
+										"dp_container": "output",
+										"dp_is_1st_header": true
+									},
+									"successtgt": {
+										"table_name": "demo_op_tb"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_00_demo')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pl_task_2_dataflow')]",
@@ -925,9 +1028,7 @@
 				"annotations": [],
 				"lastPublishTime": "2025-08-07T09:29:58Z"
 			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/dataflows/df_task_4_json_unfold_dyn')]"
-			]
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pl_task_4_dataflow_optimized')]",

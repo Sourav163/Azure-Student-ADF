@@ -25,29 +25,6 @@
 	},
 	"resources": [
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_00_demo')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Wait1",
-						"type": "Wait",
-						"dependsOn": [],
-						"userProperties": [],
-						"typeProperties": {
-							"waitTimeInSeconds": 1
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {}
-				},
-				"annotations": []
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/pl_task_5_to_be_executed')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -2011,6 +1988,63 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_mysql_tb_dyn')]",
 				"[concat(variables('factoryId'), '/datasets/ds_blob_csv_file_dyn')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_task_4_json_unfold_dyn')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_mysql_tb_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Source"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_blob_json_file_dyn",
+								"type": "DatasetReference"
+							},
+							"name": "Sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "DerivedColumn"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          intern_id as integer,",
+						"          intern_name as string,",
+						"          email as string,",
+						"          department_id as integer,",
+						"          stipend as decimal(10,2)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> Source",
+						"Source derive(each(match(type=='string'), $$ = replace(replace(replace(iif(instr($$, '^') != 0, toString(split($$, '^')), $$), '[\"', concat('[{\"', $0, '\":\"')), '\",\"', concat('\"},{\"', $0, '\":\"')), '\"]', '\"}]'))) ~> DerivedColumn",
+						"DerivedColumn sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     partitionFileNames:['1_uncapped_extended_df.json'],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> Sink"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_mysql_tb_dyn')]",
+				"[concat(variables('factoryId'), '/datasets/ds_blob_json_file_dyn')]"
 			]
 		}
 	]
