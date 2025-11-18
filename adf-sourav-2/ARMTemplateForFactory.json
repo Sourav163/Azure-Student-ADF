@@ -3247,7 +3247,7 @@
 						"          create_date = create_date) ~> dcBatch",
 						"derivedFilenms aggregate(groupBy(batch_dc,",
 						"          file_nms),",
-						"     json = concat('{\"TRYCaseList\":',replace(replace(replace(replace(unescape(toString(collect(create_date)),'json'),'\"]}',']}'),'\"}}\"','\"}}'),'[\"{\"','[{\"'),'\"{\"ad','{\"ad'), '}')) ~> aggregateCollect",
+						"     json = concat('{\"TRYCaseList\":',replace(replace(replace(replace(unescape(toString(collect(event_id)),'json'),'\"]}',']}'),'\"}}\"','\"}}'),'[\"{\"','[{\"'),'\"{\"ad','{\"ad'), '}')) ~> aggregateCollect",
 						"dcBatch derive(file_nms = 'try/outbound/TRY_MODEL_'+toString(batch_dc)+'_'+toString($batch_nm)+'.json') ~> derivedFilenms",
 						"aggregateCollect sink(allowSchemaDrift: true,",
 						"     validateSchema: false,",
