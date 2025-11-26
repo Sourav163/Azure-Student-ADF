@@ -47,11 +47,7 @@
 									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/archive/', encodeUriComponent(item().name))",
 									"type": "Expression"
 								},
-								"body": "()",
-								"authentication": {
-									"type": "MSI",
-									"resource": "https://storage.azure.com/"
-								}
+								"body": "()"
 							}
 						}
 					]
