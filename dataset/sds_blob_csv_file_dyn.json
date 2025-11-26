@@ -1,0 +1,36 @@
+{
+	"name": "sds_blob_csv_file_dyn",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sourav_blob_sa_1",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Sourav"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "a_demo.csv",
+				"folderPath": "inbound",
+				"container": "souravcontainer"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "id",
+				"type": "String"
+			},
+			{
+				"name": "title",
+				"type": "String"
+			}
+		]
+	}
+}
