@@ -1,9 +1,40 @@
 {
-	"name": "sds_blob_csv_file_dyn",
+	"name": "sds_adls_csv_file_dyn",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "ls_sourav_blob_sa_1",
+			"referenceName": "ls_sourav_adls_sa_1",
 			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dp_file": {
+				"type": "string"
+			},
+			"dp_folder": {
+				"type": "string"
+			},
+			"dp_container": {
+				"type": "string"
+			},
+			"dp_is_1st_header": {
+				"type": "bool",
+				"defaultValue": true
+			},
+			"dp_quote_character": {
+				"type": "string",
+				"defaultValue": "\""
+			},
+			"dp_escape_character": {
+				"type": "string",
+				"defaultValue": "\\"
+			},
+			"dp_column_delimiter": {
+				"type": "string",
+				"defaultValue": ","
+			},
+			"dp_row_delimiter": {
+				"type": "string",
+				"defaultValue": "@base64ToString('DQo=')"
+			}
 		},
 		"folder": {
 			"name": "Sourav"
@@ -12,15 +43,40 @@
 		"type": "DelimitedText",
 		"typeProperties": {
 			"location": {
-				"type": "AzureBlobStorageLocation",
-				"fileName": "a_demo.csv",
-				"folderPath": "inbound",
-				"container": "souravcontainer"
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().dp_file",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().dp_folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().dp_container",
+					"type": "Expression"
+				}
 			},
-			"columnDelimiter": ",",
-			"escapeChar": "\\",
-			"firstRowAsHeader": true,
-			"quoteChar": "\""
+			"columnDelimiter": {
+				"value": "@dataset().dp_column_delimiter",
+				"type": "Expression"
+			},
+			"rowDelimiter": {
+				"value": "@dataset().dp_row_delimiter",
+				"type": "Expression"
+			},
+			"escapeChar": {
+				"value": "@dataset().dp_escape_character",
+				"type": "Expression"
+			},
+			"firstRowAsHeader": {
+				"value": "@dataset().dp_is_1st_header",
+				"type": "Expression"
+			},
+			"quoteChar": {
+				"value": "@dataset().dp_quote_character",
+				"type": "Expression"
+			}
 		},
 		"schema": [
 			{
