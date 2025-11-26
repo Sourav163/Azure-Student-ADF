@@ -37,14 +37,14 @@
 								"method": "PUT",
 								"headers": {
 									"x-ms-rename-source": {
-										"value": "@concat('/sourav/inbound/', encodeUriComponent(item().name))",
+										"value": "@concat('/sourav/', pipeline().parameters.pp_move_from, '/', encodeUriComponent(item().name))",
 										"type": "Expression"
 									},
 									"x-ms-version": "2020-04-08",
 									"Content-Length": "0"
 								},
 								"url": {
-									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/archive/', encodeUriComponent(item().name))",
+									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/', pipeline().parameters.pp_move_to, '/', encodeUriComponent(item().name))",
 									"type": "Expression"
 								},
 								"body": "()",
@@ -74,7 +74,10 @@
 						"referenceName": "sds_adls_csv_folder_dyn",
 						"type": "DatasetReference",
 						"parameters": {
-							"dp_folder": "inbound",
+							"dp_folder": {
+								"value": "@pipeline().parameters.pp_move_from",
+								"type": "Expression"
+							},
 							"dp_container": "sourav",
 							"dp_is_1st_header": true
 						}
@@ -92,6 +95,16 @@
 				}
 			}
 		],
+		"parameters": {
+			"pp_move_from": {
+				"type": "string",
+				"defaultValue": "inbound"
+			},
+			"pp_move_to": {
+				"type": "string",
+				"defaultValue": "archive"
+			}
+		},
 		"folder": {
 			"name": "Sourav"
 		},
