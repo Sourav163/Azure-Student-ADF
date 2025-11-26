@@ -37,14 +37,14 @@
 								"method": "PUT",
 								"headers": {
 									"x-ms-rename-source": {
-										"value": "@concat('/sourav/inbound/', encodeUriComponent(item().name))",
+										"value": "@concat('/sourav/archive/', encodeUriComponent(item().name))",
 										"type": "Expression"
 									},
 									"x-ms-version": "2020-04-08",
 									"Content-Length": "0"
 								},
 								"url": {
-									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/archive/', encodeUriComponent(item().name))",
+									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/inbound/', encodeUriComponent(item().name))",
 									"type": "Expression"
 								},
 								"body": "()",
@@ -74,9 +74,9 @@
 						"referenceName": "ds_blob_csv_folder_dyn",
 						"type": "DatasetReference",
 						"parameters": {
-							"dp_folder": "inbound",
+							"dp_folder": "archive",
 							"dp_container": "souravcontainer",
-							"dp_is_1st_header": true
+							"dp_is_1st_header": false
 						}
 					},
 					"fieldList": [
