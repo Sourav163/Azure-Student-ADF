@@ -3,34 +3,6 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Move Data From inbound to archive",
-				"type": "WebActivity",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
-				"policy": {
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"method": "PUT",
-					"headers": {
-						"x-ms-rename-source": "/ananta/inbound/cutomers-100.csv",
-						"x-ms-version": "2020-04-08",
-						"Content-Length": "0"
-					},
-					"url": "https://souravadlssa1.dfs.core.windows.net/ananta/archive/cutomers-100.csv",
-					"body": "()",
-					"authentication": {
-						"type": "MSI",
-						"resource": "https://storage.azure.com/"
-					}
-				}
-			},
-			{
 				"name": "Get Files",
 				"type": "GetMetadata",
 				"dependsOn": [],
@@ -45,7 +17,10 @@
 				"typeProperties": {
 					"dataset": {
 						"referenceName": "ads_adls_csv_dyn",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"directory": "inbound"
+						}
 					},
 					"fieldList": [
 						"childItems"
@@ -57,6 +32,60 @@
 					"formatSettings": {
 						"type": "DelimitedTextReadSettings"
 					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Files').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Move Data From inbound to archive",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "PUT",
+								"headers": {
+									"x-ms-rename-source": {
+										"value": "@concat('/ananta/inbound/',item().name)",
+										"type": "Expression"
+									},
+									"x-ms-version": "2020-04-08",
+									"Content-Length": "0"
+								},
+								"url": {
+									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/ananta/','archive/',item().name)",
+									"type": "Expression"
+								},
+								"body": "()",
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://storage.azure.com/"
+								}
+							}
+						}
+					]
 				}
 			}
 		],
