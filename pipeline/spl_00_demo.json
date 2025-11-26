@@ -41,7 +41,11 @@
 										"type": "Expression"
 									},
 									"x-ms-version": "2020-04-08",
-									"Content-Length": "0"
+									"Content-Length": "0",
+									"Authorization": {
+										"value": "Bearer",
+										"type": "Expression"
+									}
 								},
 								"url": {
 									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/archive/', encodeUriComponent(item().name))",
