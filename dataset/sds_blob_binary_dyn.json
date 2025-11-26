@@ -1,0 +1,28 @@
+{
+	"name": "sds_blob_binary_dyn",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sourav_blob_sa_1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dp_container": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Sourav"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"container": {
+					"value": "@dataset().dp_container",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

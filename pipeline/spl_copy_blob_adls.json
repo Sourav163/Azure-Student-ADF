@@ -1,0 +1,75 @@
+{
+	"name": "spl_copy_blob_adls",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy Data",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "BinarySource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"deleteFilesAfterCompletion": false
+						},
+						"formatSettings": {
+							"type": "BinaryReadSettings"
+						}
+					},
+					"sink": {
+						"type": "BinarySink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "sds_blob_binary_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_container": {
+								"value": "@pipeline().parameters.pp_container_name",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sds_adls_binary_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_container": {
+								"value": "@pipeline().parameters.pp_container_name",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"pp_container_name": {
+				"type": "string",
+				"defaultValue": "output"
+			}
+		},
+		"folder": {
+			"name": "Sourav"
+		},
+		"annotations": []
+	}
+}
