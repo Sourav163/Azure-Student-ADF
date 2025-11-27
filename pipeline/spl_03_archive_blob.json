@@ -1,5 +1,5 @@
 {
-	"name": "spl_02_archive_adls",
+	"name": "spl_03_archive_blob",
 	"properties": {
 		"activities": [
 			{
@@ -37,14 +37,14 @@
 								"method": "PUT",
 								"headers": {
 									"x-ms-rename-source": {
-										"value": "@concat('/sourav/', pipeline().parameters.pp_move_from, '/', encodeUriComponent(item().name))",
+										"value": "@concat('/souravcontainer/', pipeline().parameters.pp_move_from, '/', encodeUriComponent(item().name))",
 										"type": "Expression"
 									},
 									"x-ms-version": "2020-04-08",
 									"Content-Length": "0"
 								},
 								"url": {
-									"value": "@concat('https://souravadlssa1.dfs.core.windows.net/sourav/', pipeline().parameters.pp_move_to, '/', encodeUriComponent(item().name))",
+									"value": "@concat('https://souravblobsa1.dfs.core.windows.net/souravcontainer/', pipeline().parameters.pp_move_to, '/', encodeUriComponent(item().name))",
 									"type": "Expression"
 								},
 								"body": "()",
@@ -71,14 +71,14 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "sds_adls_csv_folder_dyn",
+						"referenceName": "ds_blob_csv_folder_dyn",
 						"type": "DatasetReference",
 						"parameters": {
 							"dp_folder": {
 								"value": "@pipeline().parameters.pp_move_from",
 								"type": "Expression"
 							},
-							"dp_container": "sourav",
+							"dp_container": "souravcontainer",
 							"dp_is_1st_header": true
 						}
 					},
@@ -86,8 +86,7 @@
 						"childItems"
 					],
 					"storeSettings": {
-						"type": "AzureBlobFSReadSettings",
-						"recursive": true,
+						"type": "AzureBlobStorageReadSettings",
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
