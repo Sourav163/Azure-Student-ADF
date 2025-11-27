@@ -1,5 +1,5 @@
 {
-	"name": "spl_03_archive_blob",
+	"name": "spl_03_web_copy_blob",
 	"properties": {
 		"activities": [
 			{
@@ -36,15 +36,16 @@
 							"typeProperties": {
 								"method": "PUT",
 								"headers": {
-									"x-ms-rename-source": {
-										"value": "@concat('/souravcontainer/', pipeline().parameters.pp_move_from, '/', encodeUriComponent(item().name))",
+									"x-ms-copy-source": {
+										"value": "@concat('https://souravblobsa1.blob.core.windows.net/souravcontainer/', pipeline().parameters.pp_move_from, '/', item().name, '?sv=2024-11-04&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2025-11-27T14:37:01Z&st=2025-11-27T06:22:01Z&spr=https&sig=vRnUr2Yyrt3xAu5EhLgVGPH82cySKkfE4ggRCFlnEds%3D')",
 										"type": "Expression"
 									},
 									"x-ms-version": "2020-04-08",
+									"x-ms-blob-type": "BlockBlob",
 									"Content-Length": "0"
 								},
 								"url": {
-									"value": "@concat('https://souravblobsa1.dfs.core.windows.net/souravcontainer/', pipeline().parameters.pp_move_to, '/', encodeUriComponent(item().name))",
+									"value": "@concat('https://souravblobsa1.blob.core.windows.net/souravcontainer/', pipeline().parameters.pp_move_to, '/', item().name)",
 									"type": "Expression"
 								},
 								"body": "()",
@@ -87,6 +88,7 @@
 					],
 					"storeSettings": {
 						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
 						"enablePartitionDiscovery": false
 					},
 					"formatSettings": {
