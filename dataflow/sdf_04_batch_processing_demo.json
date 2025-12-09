@@ -72,8 +72,6 @@
 				"     validateSchema: false,",
 				"     format: 'delimited',",
 				"     fileSystem: 'sourav',",
-				"     folderPath: 'outbound',",
-				"     truncate: true,",
 				"     rowDelimiter: '',",
 				"     columnDelimiter: '',",
 				"     escapeChar: '',",
