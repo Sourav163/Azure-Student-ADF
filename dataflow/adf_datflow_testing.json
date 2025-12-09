@@ -1,0 +1,90 @@
+{
+	"name": "adf_datflow_testing",
+	"properties": {
+		"folder": {
+			"name": "Ananta"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_ananta_adls_sa1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_ananta_adls_sa1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "JSONGenerate"
+				}
+			],
+			"transformations": [
+				{
+					"name": "MakeJson"
+				},
+				{
+					"name": "surrogateKey1"
+				},
+				{
+					"name": "BatchDefine"
+				},
+				{
+					"name": "fileName"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          EmployeeID as short,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          Email as string,",
+				"          PhoneNumber as long,",
+				"          HireDate as date,",
+				"          Department as string,",
+				"          Salary as double",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     fileSystem: 'ananta',",
+				"     folderPath: 'inbound',",
+				"     fileName: 'large_user_db.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> source1",
+				"fileName aggregate(groupBy(fileNm),",
+				"     empData = collect(@(EmployeeID=EmployeeID,FirstName=FirstName,LastName=LastName,Email=Email,PhoneNumber=PhoneNumber,HireDate=HireDate,Department=Department,Salary=Salary))) ~> MakeJson",
+				"source1 keyGenerate(output(rn as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKey1",
+				"surrogateKey1 derive(batch_nm = ceil(rn/100)) ~> BatchDefine",
+				"BatchDefine derive(fileNm = 'outbound/partition/ANANTA_MODEL'+'_'+toString(batch_nm)+'.json') ~> fileName",
+				"MakeJson sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delimited',",
+				"     fileSystem: 'ananta',",
+				"     folderPath: 'outbound',",
+				"     rowDelimiter: '',",
+				"     columnDelimiter: '',",
+				"     escapeChar: '',",
+				"     quoteChar: '',",
+				"     columnNamesAsHeader: false,",
+				"     rowUrlColumn:'fileNm',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> JSONGenerate"
+			]
+		}
+	}
+}
