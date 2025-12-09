@@ -67,7 +67,7 @@
 				"SurrogateKeyID derive(batch_id = ceil(id/500)) ~> DerivedColumnBATCH",
 				"DerivedColumnFILE aggregate(groupBy(File_Name),",
 				"     json_data = collect(@(EmployeeID=EmployeeID, FirstName=FirstName, LastName=LastName, Email=Email, PhoneNumber=PhoneNumber, HireDate=HireDate, Department=Department, Salary=Salary))) ~> AggregateJSON",
-				"DerivedColumnBATCH derive(File_Name = concat(\"outbound/Employee_DB_JSON/\", \"Employee_DB_Batch__\", toString(batch_id))) ~> DerivedColumnFILE",
+				"DerivedColumnBATCH derive(File_Name = concat(\"outbound/Employee_DB_JSON/\", \"Employee_DB_Batch__\", toString(batch_id), \".json\")) ~> DerivedColumnFILE",
 				"AggregateJSON sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'delimited',",
