@@ -1,0 +1,67 @@
+{
+	"name": "adf_dataflow_json_testing",
+	"properties": {
+		"folder": {
+			"name": "Ananta"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_mysql_server_ananta_1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "Source"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "stringify1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          CustomerID as string,",
+				"          FullName as string,",
+				"          Email as string,",
+				"          PhoneNumber as string,",
+				"          Location as string,",
+				"          CustomerType as string,",
+				"          SignupDate as string,",
+				"          InventoryUploadDate as date,",
+				"          Status as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'table',",
+				"     tableName: 'customer100_db',",
+				"     store: 'mysql',",
+				"     isolationLevel: 'NONE') ~> Source",
+				"Source derive(rowStruct = concat(\r",
+				"  '{',\r",
+				"  '\"CustomerID\":\"', CustomerID, '\",',\r",
+				"  '\"FullName\":\"', FullName, '\",',\r",
+				"  '\"Email\":\"', Email, '\",',\r",
+				"  '\"PhoneNumber\":\"', PhoneNumber, '\",',\r",
+				"  '\"Location\":\"', Location, '\",',\r",
+				"  '\"CustomerType\":\"', CustomerType, '\",',\r",
+				"  '\"SignupDate\":\"', SignupDate, '\",',\r",
+				"  '\"InventoryUploadDate\":\"', toString(InventoryUploadDate), '\",',\r",
+				"  '\"Status\":\"', Status, '\"',\r",
+				"  '}'\r",
+				")\r",
+				") ~> derivedColumn1",
+				"derivedColumn1 stringify(CustomerID = ERROR_FUNCTION('') ? string,",
+				"     format: 'delimited',",
+				"     columnNamesAsHeader: false,",
+				"     columnDelimiter: ',',",
+				"     nullValue: '') ~> stringify1"
+			]
+		}
+	}
+}
