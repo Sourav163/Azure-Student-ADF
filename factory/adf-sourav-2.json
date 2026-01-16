@@ -16,7 +16,7 @@
 			},
 			"connecting_ananta_mysql_db": {
 				"type": "string",
-				"value": "https://kv-dev-ananta.vault.azure.net/secrets/ananta-mysql-conn-string/c27fa2ddf5864cf0bad58c8383a71b57"
+				"value": "https://kv-dev-ananta.vault.azure.net/secrets/ananta-mysql-conn-string-sql/9e0298b4b35f4759aa564b05c1808400"
 			}
 		}
 	},
