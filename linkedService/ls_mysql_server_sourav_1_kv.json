@@ -1,0 +1,18 @@
+{
+	"name": "ls_mysql_server_sourav_1_kv",
+	"properties": {
+		"annotations": [],
+		"type": "AzureMySql",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_kv_ics_adf_rg_1_sourav",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "secret-adf-mysql-server-sourav2-connectionstring",
+				"secretVersion": "2e1cfa96a37a43b0a1890bdaae64d6b9"
+			}
+		}
+	}
+}
