@@ -1,0 +1,10 @@
+{
+	"name": "kv_ls_ananta",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://KV-DEV-ANANTA.vault.azure.net/"
+		}
+	}
+}
