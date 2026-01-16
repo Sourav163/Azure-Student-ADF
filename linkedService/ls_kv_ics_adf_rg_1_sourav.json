@@ -1,0 +1,10 @@
+{
+	"name": "ls_kv_ics_adf_rg_1_sourav",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://KV-ICS-ADF-RG-1-SOURAV.vault.azure.net/"
+		}
+	}
+}

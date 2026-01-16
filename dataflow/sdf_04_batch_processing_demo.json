@@ -1,0 +1,89 @@
+{
+	"name": "sdf_04_batch_processing_demo",
+	"properties": {
+		"folder": {
+			"name": "Sourav"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"linkedService": {
+						"referenceName": "ls_sourav_adls_sa_1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SourceCSV"
+				}
+			],
+			"sinks": [
+				{
+					"linkedService": {
+						"referenceName": "ls_sourav_adls_sa_1",
+						"type": "LinkedServiceReference"
+					},
+					"name": "SinkJSON"
+				}
+			],
+			"transformations": [
+				{
+					"name": "SurrogateKeyID"
+				},
+				{
+					"name": "DerivedColumnBATCH"
+				},
+				{
+					"name": "AggregateJSON"
+				},
+				{
+					"name": "DerivedColumnFILE"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          EmployeeID as short,",
+				"          FirstName as string,",
+				"          LastName as string,",
+				"          Email as string,",
+				"          PhoneNumber as long,",
+				"          HireDate as date,",
+				"          Department as string,",
+				"          Salary as double",
+				"     ),",
+				"     useSchema: false,",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: true,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'delimited',",
+				"     fileSystem: 'sourav',",
+				"     folderPath: 'inbound',",
+				"     fileName: 'Employee_DB.csv',",
+				"     columnDelimiter: ',',",
+				"     escapeChar: '\\\\',",
+				"     quoteChar: '\\\"',",
+				"     columnNamesAsHeader: true) ~> SourceCSV",
+				"SourceCSV keyGenerate(output(id as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> SurrogateKeyID",
+				"SurrogateKeyID derive(batch_id = ceil(id/500)) ~> DerivedColumnBATCH",
+				"DerivedColumnFILE aggregate(groupBy(File_Name),",
+				"     json_data = collect(@(EmployeeID=EmployeeID, FirstName=FirstName, LastName=LastName, Email=Email, PhoneNumber=PhoneNumber, HireDate=HireDate, Department=Department, Salary=Salary))) ~> AggregateJSON",
+				"DerivedColumnBATCH derive(File_Name = concat(\"outbound/Employee_DB_JSON/\", \"Employee_DB_Batch__\", toString(batch_id), \".json\")) ~> DerivedColumnFILE",
+				"AggregateJSON sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'delimited',",
+				"     fileSystem: 'sourav',",
+				"     rowDelimiter: '',",
+				"     columnDelimiter: '',",
+				"     escapeChar: '',",
+				"     quoteChar: '',",
+				"     columnNamesAsHeader: false,",
+				"     rowUrlColumn:'File_Name',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SinkJSON"
+			]
+		}
+	}
+}

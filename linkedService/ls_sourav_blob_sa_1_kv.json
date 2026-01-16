@@ -1,0 +1,17 @@
+{
+	"name": "ls_sourav_blob_sa_1_kv",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_kv_ics_adf_rg_1_sourav",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "secret-souravblobsa1-connectionstring"
+			}
+		}
+	}
+}

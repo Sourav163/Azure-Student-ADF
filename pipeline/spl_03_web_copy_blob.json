@@ -1,0 +1,115 @@
+{
+	"name": "spl_03_web_copy_blob",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach inbound file",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get inbound files",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get inbound files').output.childItems",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Archive each inbound file",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "PUT",
+								"headers": {
+									"x-ms-copy-source": {
+										"value": "@concat('https://souravblobsa1.blob.core.windows.net/souravcontainer/', pipeline().parameters.pp_move_from, '/', item().name, '?sv=2024-11-04&ss=bfqt&srt=sco&sp=rwdlacupiytfx&se=2025-11-27T14:37:01Z&st=2025-11-27T06:22:01Z&spr=https&sig=vRnUr2Yyrt3xAu5EhLgVGPH82cySKkfE4ggRCFlnEds%3D')",
+										"type": "Expression"
+									},
+									"x-ms-version": "2020-04-08",
+									"x-ms-blob-type": "BlockBlob",
+									"Content-Length": "0"
+								},
+								"url": {
+									"value": "@concat('https://souravblobsa1.blob.core.windows.net/souravcontainer/', pipeline().parameters.pp_move_to, '/', item().name)",
+									"type": "Expression"
+								},
+								"body": "()",
+								"authentication": {
+									"type": "MSI",
+									"resource": "https://storage.azure.com/"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Get inbound files",
+				"type": "GetMetadata",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_blob_csv_folder_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_folder": {
+								"value": "@pipeline().parameters.pp_move_from",
+								"type": "Expression"
+							},
+							"dp_container": "souravcontainer",
+							"dp_is_1st_header": true
+						}
+					},
+					"fieldList": [
+						"childItems"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"pp_move_from": {
+				"type": "string",
+				"defaultValue": "inbound"
+			},
+			"pp_move_to": {
+				"type": "string",
+				"defaultValue": "archive"
+			}
+		},
+		"folder": {
+			"name": "Sourav"
+		},
+		"annotations": []
+	}
+}
