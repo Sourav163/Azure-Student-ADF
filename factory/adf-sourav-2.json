@@ -10,7 +10,7 @@
 					"Execute Pipeline 4"
 				]
 			},
-			"connection_source_db": {
+			"connection_ananta_source_db": {
 				"type": "string",
 				"value": "https://kv-dev-ananta.vault.azure.net/secrets/sourav-blob-connectionstring/7c34d883e5354e50967cadd866fbda27"
 			}
