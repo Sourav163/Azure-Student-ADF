@@ -1,0 +1,105 @@
+{
+	"name": "pl_01_az_databricks_demo_split",
+	"properties": {
+		"activities": [
+			{
+				"name": "from_inbound_to_az_databricks",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": false,
+							"wildcardFileName": "input_data_*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".csv"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_blob_csv_folder_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_folder": "inbound",
+							"dp_container": "souravcontainer",
+							"dp_is_1st_header": true
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_blob_csv_folder_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_folder": "inbound/input_data_for_az_databricks",
+							"dp_container": "souravcontainer",
+							"dp_is_1st_header": true
+						}
+					}
+				]
+			},
+			{
+				"name": "az_databricks_transformation",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "from_inbound_to_az_databricks",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/try0.sourav.ics2025@outlook.com/Demo Notebook"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricksDemo",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
