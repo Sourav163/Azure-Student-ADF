@@ -48,7 +48,16 @@
 			{
 				"name": "Web KV",
 				"type": "WebActivity",
-				"dependsOn": [],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Data Flow",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -64,6 +73,33 @@
 						"type": "MSI",
 						"resource": "https://vault.azure.net"
 					}
+				}
+			},
+			{
+				"name": "Notebook",
+				"type": "DatabricksNotebook",
+				"dependsOn": [
+					{
+						"activity": "Web KV",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/try0.sourav.ics2025@outlook.com/Demo Notebook"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricksDemo",
+					"type": "LinkedServiceReference"
 				}
 			}
 		],
