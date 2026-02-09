@@ -5,6 +5,8 @@
 			{
 				"name": "from_inbound_to_az_databricks",
 				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
@@ -73,11 +75,156 @@
 				]
 			},
 			{
-				"name": "az_databricks_transformation",
+				"name": "az_databricks_transformation_blob",
 				"type": "DatabricksNotebook",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "from_inbound_to_az_databricks",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/try0.sourav.ics2025@outlook.com/Demo Notebook"
+				},
+				"linkedServiceName": {
+					"referenceName": "LS_AzureDatabricksDemo",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "from_blob_inbound_to_adls_az_databricks",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "@{'souravcontainer'}/@{'inbound'}/"
+					},
+					{
+						"name": "Destination",
+						"value": "@{'sourav'}/@{'inbound/input_data_for_az_databricks'}/"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": false,
+							"wildcardFileName": "input_data_*.csv",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".csv"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"type": "String",
+									"ordinal": 1
+								},
+								"sink": {
+									"type": "String",
+									"physicalType": "String",
+									"ordinal": 1
+								}
+							},
+							{
+								"source": {
+									"type": "String",
+									"ordinal": 2
+								},
+								"sink": {
+									"type": "String",
+									"physicalType": "String",
+									"ordinal": 2
+								}
+							},
+							{
+								"source": {
+									"type": "String",
+									"ordinal": 3
+								},
+								"sink": {
+									"type": "String",
+									"physicalType": "String",
+									"ordinal": 3
+								}
+							}
+						],
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_blob_csv_folder_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_folder": "inbound",
+							"dp_container": "souravcontainer",
+							"dp_is_1st_header": true
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sds_adls_csv_folder_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_folder": "inbound/input_data_for_az_databricks",
+							"dp_container": "sourav",
+							"dp_is_1st_header": true
+						}
+					}
+				]
+			},
+			{
+				"name": "az_databricks_transformation_adls",
+				"type": "DatabricksNotebook",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "from_blob_inbound_to_adls_az_databricks",
 						"dependencyConditions": [
 							"Succeeded"
 						]
