@@ -76,11 +76,155 @@
 				}
 			},
 			{
-				"name": "Notebook",
-				"type": "DatabricksNotebook",
+				"name": "from_blob_to_blob",
+				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "@{'souravcontainer'}/@{'inbound'}/@{'a_demo.csv'}"
+					},
+					{
+						"name": "Destination",
+						"value": "@{'sourav'}/@{'inbound'}/@{'a_demo_modified.csv'}"
+					}
+				],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "file_path",
+								"value": "$$FILEPATH"
+							},
+							{
+								"name": "file_name",
+								"value": "$$FILENAME"
+							},
+							{
+								"name": "column_id",
+								"value": "$$COLUMN:id"
+							},
+							{
+								"name": "column_title",
+								"value": "$$COLUMN:title"
+							},
+							{
+								"name": "my_name",
+								"value": "sourav"
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": true,
+							"partitionRootPath": "souravcontainer/inbound"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy",
+							"metadata": [
+								{
+									"name": "created_by",
+									"value": "sourav"
+								},
+								{
+									"name": "modified_by",
+									"value": "sourav"
+								}
+							]
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_sourav_blob_sa_1",
+							"type": "LinkedServiceReference"
+						},
+						"path": "souravcontainer/staging"
+					},
+					"logSettings": {
+						"enableCopyActivityLog": true,
+						"copyActivityLogSettings": {
+							"logLevel": "Info",
+							"enableReliableLogging": true
+						},
+						"logLocationSettings": {
+							"linkedServiceName": {
+								"referenceName": "ls_sourav_blob_sa_1",
+								"type": "LinkedServiceReference"
+							},
+							"path": "souravcontainer/logging"
+						}
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_blob_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "a_demo.csv",
+							"dp_folder": "inbound",
+							"dp_container": "souravcontainer",
+							"dp_is_1st_header": true,
+							"dp_quote_character": "\"",
+							"dp_escape_character": "\\",
+							"dp_column_delimiter": ",",
+							"dp_row_delimiter": "@base64ToString('DQo=')"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sds_adls_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "a_demo_modified.csv",
+							"dp_folder": "inbound",
+							"dp_container": "sourav",
+							"dp_is_1st_header": true,
+							"dp_quote_character": "\"",
+							"dp_escape_character": "\\",
+							"dp_column_delimiter": ",",
+							"dp_row_delimiter": "@base64ToString('DQo=')"
+						}
+					}
+				]
+			},
+			{
+				"name": "from_adls_to_adls",
+				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Web KV",
+						"activity": "from_blob_to_blob",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -93,14 +237,136 @@
 					"secureOutput": false,
 					"secureInput": false
 				},
-				"userProperties": [],
+				"userProperties": [
+					{
+						"name": "Source",
+						"value": "@{'souravcontainer'}/@{'inbound'}/@{'a_demo.csv'}"
+					},
+					{
+						"name": "Destination",
+						"value": "@{'sourav'}/@{'inbound'}/@{'a_demo_modified.csv'}"
+					}
+				],
 				"typeProperties": {
-					"notebookPath": "/Users/try0.sourav.ics2025@outlook.com/Demo Notebook"
+					"source": {
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "file_path",
+								"value": "$$FILEPATH"
+							},
+							{
+								"name": "file_name",
+								"value": "$$FILENAME"
+							},
+							{
+								"name": "column_id",
+								"value": "$$COLUMN:id"
+							},
+							{
+								"name": "column_title",
+								"value": "$$COLUMN:title"
+							},
+							{
+								"name": "my_name",
+								"value": "sourav"
+							}
+						],
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": true,
+							"partitionRootPath": "sourav/inbound"
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "DelimitedTextSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy",
+							"metadata": [
+								{
+									"name": "created_by",
+									"value": "sourav"
+								},
+								{
+									"name": "modified_by",
+									"value": "sourav"
+								}
+							]
+						},
+						"formatSettings": {
+							"type": "DelimitedTextWriteSettings",
+							"quoteAllText": true,
+							"fileExtension": ".txt"
+						}
+					},
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "ls_sourav_adls_sa_1",
+							"type": "LinkedServiceReference"
+						},
+						"path": "sourav/staging"
+					},
+					"logSettings": {
+						"enableCopyActivityLog": true,
+						"copyActivityLogSettings": {
+							"logLevel": "Info",
+							"enableReliableLogging": true
+						},
+						"logLocationSettings": {
+							"linkedServiceName": {
+								"referenceName": "ls_sourav_adls_sa_1",
+								"type": "LinkedServiceReference"
+							},
+							"path": "sourav/logging"
+						}
+					},
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
 				},
-				"linkedServiceName": {
-					"referenceName": "LS_AzureDatabricksDemo",
-					"type": "LinkedServiceReference"
-				}
+				"inputs": [
+					{
+						"referenceName": "sds_adls_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "a_demo.csv",
+							"dp_folder": "inbound",
+							"dp_container": "sourav",
+							"dp_is_1st_header": true,
+							"dp_quote_character": "\"",
+							"dp_escape_character": "\\",
+							"dp_column_delimiter": ",",
+							"dp_row_delimiter": "@base64ToString('DQo=')"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sds_adls_csv_file_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"dp_file": "a_demo_modified.csv",
+							"dp_folder": "inbound",
+							"dp_container": "sourav",
+							"dp_is_1st_header": true,
+							"dp_quote_character": "\"",
+							"dp_escape_character": "\\",
+							"dp_column_delimiter": ",",
+							"dp_row_delimiter": "@base64ToString('DQo=')"
+						}
+					}
+				]
 			}
 		],
 		"annotations": []
