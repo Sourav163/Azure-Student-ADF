@@ -5,9 +5,9 @@
 		"typeProperties": {
 			"sources": [
 				{
-					"linkedService": {
-						"referenceName": "ls_ananta_adls_sa1",
-						"type": "LinkedServiceReference"
+					"dataset": {
+						"referenceName": "ads_adls_customer_100",
+						"type": "DatasetReference"
 					},
 					"name": "source1"
 				}
@@ -15,18 +15,20 @@
 			"sinks": [],
 			"transformations": [],
 			"scriptLines": [
-				"source(useSchema: false,",
+				"source(output(",
+				"          CustomerID as string,",
+				"          FullName as string,",
+				"          Email as string,",
+				"          PhoneNumber as string,",
+				"          Location as string,",
+				"          CustomerType as string,",
+				"          SignupDate as string,",
+				"          InventoryUploadDate as date,",
+				"          Status as string",
+				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: true,",
-				"     ignoreNoFilesFound: false,",
-				"     format: 'delimited',",
-				"     fileSystem: 'ananta',",
-				"     folderPath: 'inbound',",
-				"     fileName: 'cutomers-100.csv',",
-				"     columnDelimiter: ',',",
-				"     escapeChar: '\\\\',",
-				"     quoteChar: '\\\"',",
-				"     columnNamesAsHeader: true) ~> source1"
+				"     ignoreNoFilesFound: false) ~> source1"
 			]
 		}
 	}

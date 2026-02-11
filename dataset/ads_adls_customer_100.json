@@ -1,0 +1,61 @@
+{
+	"name": "ads_adls_customer_100",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_ananta_adls_sa1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "cutomers-100.csv",
+				"folderPath": "inbound",
+				"fileSystem": "ananta"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "CustomerID",
+				"type": "String"
+			},
+			{
+				"name": "FullName",
+				"type": "String"
+			},
+			{
+				"name": "Email",
+				"type": "String"
+			},
+			{
+				"name": "PhoneNumber",
+				"type": "String"
+			},
+			{
+				"name": "Location",
+				"type": "String"
+			},
+			{
+				"name": "CustomerType",
+				"type": "String"
+			},
+			{
+				"name": "SignupDate",
+				"type": "String"
+			},
+			{
+				"name": "InventoryUploadDate",
+				"type": "String"
+			},
+			{
+				"name": "Status",
+				"type": "String"
+			}
+		]
+	}
+}
