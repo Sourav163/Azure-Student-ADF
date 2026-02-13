@@ -302,7 +302,16 @@
 			{
 				"name": "Data flow1",
 				"type": "ExecuteDataFlow",
-				"dependsOn": [],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Fetch Cricketer Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -321,6 +330,116 @@
 						"computeType": "General"
 					},
 					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Fetch Cricketer Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Validation1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "DelimitedTextSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "DelimitedTextReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureMySqlSink",
+						"writeBatchSize": 10000,
+						"writeBatchTimeout": "00:00:30",
+						"preCopyScript": "CREATE TABLE `cricket_players` (\n  `player_id` int NOT NULL AUTO_INCREMENT,\n  `first_name` varchar(50) DEFAULT NULL,\n  `last_name` varchar(50) DEFAULT NULL,\n  `country` varchar(50) DEFAULT NULL,\n  `birth_date` date DEFAULT NULL,\n  `age` int DEFAULT NULL,\n  `batting_style` varchar(30) DEFAULT NULL,\n  `bowling_style` varchar(30) DEFAULT NULL,\n  `role` varchar(30) DEFAULT NULL,\n  `matches_played` int DEFAULT NULL,\n  `innings_batted` int DEFAULT NULL,\n  `runs_scored` int DEFAULT NULL,\n  `highest_score` int DEFAULT NULL,\n  `batting_average` decimal(5,2) DEFAULT NULL,\n  `balls_bowled` int DEFAULT NULL,\n  `wickets_taken` int DEFAULT NULL,\n  `bowling_average` decimal(5,2) DEFAULT NULL,\n  `economy_rate` decimal(4,2) DEFAULT NULL,\n  `catches` int DEFAULT NULL,\n  `stumpings` int DEFAULT NULL,\n  `debut_date` date DEFAULT NULL,\n  `last_match_date` date DEFAULT NULL,\n  `is_active` tinyint(1) DEFAULT NULL,\n  `team` varchar(50) DEFAULT NULL,\n  `jersey_number` int DEFAULT NULL,\n  `height_cm` int DEFAULT NULL,\n  `weight_kg` int DEFAULT NULL,\n  `dominant_hand` varchar(10) DEFAULT NULL,\n  `nickname` varchar(50) DEFAULT NULL,\n  PRIMARY KEY (`player_id`)\n) ENGINE=InnoDB AUTO_INCREMENT=63 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;\n"
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ads_adls_csv_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"directory": "inbound/cricket_player.csv"
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"table_name": "cricket_players"
+						}
+					}
+				]
+			},
+			{
+				"name": "Fetch Cricketer Details",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Stored procedure1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureMySqlSource",
+						"query": "-- Step 1: get the row count into a variable\nSET @cnt = (SELECT COUNT(*) FROM sourav_db.cricket_players);\n\n-- Step 2: decide batch size based on count\nSET @batch_size = CASE \n    WHEN @cnt >= 10001 THEN 10000\n    WHEN @cnt BETWEEN 1001 AND 10000 THEN 1000\n    WHEN @cnt BETWEEN 101 AND 1000 THEN 100\n    ELSE 10\nEND;\n\n-- Step 3: main query\nSELECT\n    CAST(ROW_NUMBER() OVER (ORDER BY player_id) AS CHAR) AS sno,\n    CAST(CEIL(ROW_NUMBER() OVER (ORDER BY player_id) / @batch_size) AS CHAR) AS batch_nm,\n    player_id,\n    0 AS is_process\nFROM sourav_db.cricket_players\nORDER BY player_id;",
+						"queryTimeout": "02:00:00"
+					},
+					"dataset": {
+						"referenceName": "ds_mysql_tb_dyn",
+						"type": "DatasetReference",
+						"parameters": {
+							"table_name": "cricket_players"
+						}
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
