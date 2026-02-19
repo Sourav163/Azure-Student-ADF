@@ -10,7 +10,7 @@
 		"typeProperties": {
 			"location": {
 				"type": "HttpServerLocation",
-				"relativeUrl": "AdventureWorksData/refs/heads/main/Scripts/git.json"
+				"relativeUrl": "ananta224/AdventureWorksData/refs/heads/main/Scripts/git.json"
 			}
 		},
 		"schema": {}
