@@ -23,7 +23,7 @@
 					"type": "Expression"
 				},
 				"folderPath": {
-					"value": "@concat('ananta/bronze/', dataset().p_sink_folder)\r\n",
+					"value": "@concat('ananta/Bronze/', dataset().p_sink_folder)\n",
 					"type": "Expression"
 				},
 				"fileSystem": "ananta"
