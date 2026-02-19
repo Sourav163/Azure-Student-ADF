@@ -1,0 +1,30 @@
+{
+	"name": "ds_get_github_dyn_files",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_http_raw_file_github_ananta",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"p_rel_link": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@dataset().p_rel_link",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": false,
+			"quoteChar": "\""
+		},
+		"schema": []
+	}
+}
